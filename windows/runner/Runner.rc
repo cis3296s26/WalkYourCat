@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "wyc" "\0"
+            VALUE "FileDescription", "walkyourcat" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "wyc" "\0"
+            VALUE "InternalName", "walkyourcat" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "wyc.exe" "\0"
-            VALUE "ProductName", "wyc" "\0"
+            VALUE "OriginalFilename", "walkyourcat.exe" "\0"
+            VALUE "ProductName", "walkyourcat" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

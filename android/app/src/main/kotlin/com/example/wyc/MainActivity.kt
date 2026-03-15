@@ -1,4 +1,4 @@
-package com.example.wyc
+package com.example.walkyourcat
 
 import io.flutter.embedding.android.FlutterActivity
 
