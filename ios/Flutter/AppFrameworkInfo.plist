@@ -22,11 +22,5 @@
   <string>1.0</string>
   <key>MinimumOSVersion</key>
   <string>12.0</string>
-  <!-- ___________________ FOR HEALTH API ___________________ -->
-  <key>NSHealthShareUsageDescription</key>
-  <string>We will sync your data with the Apple Health app to give you better insights</string>
-  <key>NSHealthUpdateUsageDescription</key>
-  <string>We will sync your data with the Apple Health app to give you better insights</string>
-   <!-- ___________________ END OF HEALTH API ___________________ -->
 </dict>
 </plist>
