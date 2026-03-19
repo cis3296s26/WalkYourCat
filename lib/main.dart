@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'steps.dart';                      // step counter stuff
 import 'package:walkyourcat/navbar.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
@@ -93,21 +94,31 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ],
       ),
-
-
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'You have pushed the button this many times:',
+                ),
+                Text(
+                  '$_counter',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(_selectedMenuLabel),
-          ],
-        ),
+          ),
+          
+          /* ------- STEP COUNTER WIDGET --- */
+          const Positioned(
+            top: 16,
+            left: 16,
+            child: StepCounter(title: 'Steps'),
+          ),  
+          
+        ],
       ),
 
 
