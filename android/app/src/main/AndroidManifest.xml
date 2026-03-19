@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- ____ PEDOMETER PERMISSION HERE ____ -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- ___ END OF PEDOMETER PERMISSION HERE -->
+
     <application
         android:label="walkyourcat"
         android:name="${applicationName}"

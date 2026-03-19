@@ -22,5 +22,15 @@
   <string>1.0</string>
   <key>MinimumOSVersion</key>
   <string>12.0</string>
+
+  <!-- ___________________________ SET UP PEDOMETER API ___________________________ -->
+  <key>NSMotionUsageDescription</key>
+  <string>This application tracks your steps</string>
+  <key>UIBackgroundModes</key>
+  <array>
+      <string>processing</string>
+  </array>
+  <!-- ________________________ END OF SET UP PEDOMETER API ________________________ -->
+
 </dict>
 </plist>
