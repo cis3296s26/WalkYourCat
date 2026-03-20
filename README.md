@@ -22,8 +22,11 @@ samples, guidance on mobile development, and a full API reference.
 
 ## How to run
 - If its the first time running do the following 
+
+```flutter doctor -v```
+
+### fix errors first before continuing
 ```
-flutter doctor (fix errors first before continuing)
 flutter clean
 flutter get pub
 flutter run
@@ -57,12 +60,12 @@ Follow this project board to know the latest status of the project: [https://git
 ### Andriod
 ```
     cd [project]
-    flutter build apk
+    flutter build apk --split-per-abi
 ```
 From the Command line
 - Connect your Android-powered device to your computer with a USB cable.
-- ```Enter cd [project]```
-- ```Run flutter install```
+- Enter ```cd [project]```
+- Run  ```flutter install```
 ### iOS (on macOS only)
 Instructions in Progress...
 
