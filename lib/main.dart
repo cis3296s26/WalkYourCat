@@ -121,30 +121,46 @@ class _MyHomePageState extends State<MyHomePage> {
           Positioned(
             bottom: 24,
             left: 24,
-            child: GestureDetector(
-              onTap: _openShop,
-              child: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.deepPurple,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.deepPurple.withOpacity(0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _openShop,
+                borderRadius: BorderRadius.circular(32),
+                splashColor: Colors.deepPurple.withOpacity(0.3),
+                highlightColor: Colors.deepPurple.withOpacity(0.1),
+
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeInOut,
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+
+                    gradient: const LinearGradient(
+                      colors: [Colors.deepPurple, Colors.deepPurpleAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      ),
+
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.5),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+
+                  child: const Icon(
+                      Icons.storefront_rounded,
+                      color: Colors.white,
+                      size: 26,
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.storefront_rounded,
-                  color: Colors.white,
-                  size: 26,
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),bottomNavigationBar: const CustomBottomNav(),
     );
