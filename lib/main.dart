@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'steps.dart';
+import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/shop_screen.dart';
+import 'package:walkyourcat/navbar.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
 
@@ -145,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ],
-      )
+      ),bottomNavigationBar: const CustomBottomNav(),
     );
   }
 }
