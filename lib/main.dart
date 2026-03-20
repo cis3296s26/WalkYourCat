@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'steps.dart';
-import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/shop_screen.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
