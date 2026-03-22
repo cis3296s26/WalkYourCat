@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/shop_screen.dart';
 import 'package:walkyourcat/navbar.dart';
+import 'package:walkyourcat/features/shop/shop_modal.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
 
@@ -52,11 +53,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openShop() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ShopScreen(coins: _coins),
-      ),
+    showShopModal(
+      context: context,
+      // This is the callback function, technically this logic can also live
+      // in the modal itself but tbh I was unsure what made more sense
+      onItemTap: (item) {
+        print("User clicked on ${item.name} which costs ${item.price}!");
+      },
     );
   }
 
