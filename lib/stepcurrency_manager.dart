@@ -2,13 +2,14 @@
 import 'package:shared_preferences/shared_preferences.dart';    // for storing coin balance persistently
 
 class StepCurrencyManager {
+
   /* ----- VARIABLE DECLARATIONS ----- */
   int totalCoins = 0;       // total coins earned
   int lastCheckedSteps = 0; // last step count when steps were processed for coins
   int unprocessedSteps = 0; // steps that have been fetched but not processed for coins yet
   /* -- END OF VARIABLE DECLARATIONS -- */
 
-
+  /* ----- LOAD & SAVE FUNCTIONS ----- */
   /// This method loads the saved state of coins and steps from persistent storage.
   Future<void> loadState() async {
     final SharedPreferences prefsL = await SharedPreferences.getInstance();
@@ -24,7 +25,38 @@ class StepCurrencyManager {
     await prefsS.setInt('lastCheckedSteps', lastCheckedSteps);
     await prefsS.setInt('unprocessedSteps', unprocessedSteps);
   }
+  /* --- END OF LOAD & SAVE FUNCTIONS --- */
 
-  /// TODO: Implement the logic for processing new steps and updating the coin balance accordingly.
-  Future<void> processNewSteps(int steps) async {}
+
+  /// This method processes new steps and updates the coin balance accordingly.
+  Future<void> processNewSteps(int steps) async {
+    /* --- variables --- */
+    int newSteps = 0;     // initialize new steps variable
+
+    
+    // check if steps were added since we last checked
+    if (steps >= lastCheckedSteps) {
+      newSteps = steps - lastCheckedSteps;
+    } else {
+      // case: for when the step count resets, treat all steps as new
+      newSteps = steps;
+    }
+
+    // update last checked steps and unprocessed steps
+    lastCheckedSteps = steps;
+    unprocessedSteps += newSteps;
+
+
+    // convert steps to coins (10 coins per 100 steps)
+    if (unprocessedSteps >= 100) {
+      int coinsEarned = (unprocessedSteps / 100).floor() * 10;
+      totalCoins += coinsEarned;
+
+      // keep remainder for next processing
+      unprocessedSteps = unprocessedSteps % 100;
+    }
+
+    // save the updated state
+    await saveState();
+  }
 }
