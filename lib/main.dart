@@ -1,10 +1,11 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
-import 'package:walkyourcat/shop_screen.dart';
 import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 
-enum SampleItem { itemOne, itemTwo, itemThree }
+enum SampleItem { optionOne, optionTwo, optionThree }
 
 void main() {
   runApp(const MyApp());
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'WalkYourCat Scrum 1 Demo'),
+      home: const MyHomePage(title: 'WalkYourCat Scrum 2 Demo'),
     );
   }
 }
@@ -39,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _coins = 0; // your coin balance
   SampleItem? _selectedItem;
+  final player = AudioPlayer();
 
   void _incrementCounter() {
     setState(() {
@@ -59,8 +61,32 @@ class _MyHomePageState extends State<MyHomePage> {
       // in the modal itself but tbh I was unsure what made more sense
       onItemTap: (item) {
         print("User clicked on ${item.name} which costs ${item.price}!");
+        purchaseItem(item);
       },
     );
+  }
+
+  void purchaseItem(ShopItem item) {
+    if (_coins >= item.price) {
+      setState(() {
+        _coins = _coins - item.price;
+        print(
+            "Purchased ${item.name} for ${item.price} coins! Remaining balance: $_coins coins.");
+      });
+      try{
+        player.play(AssetSource('sounds/purchase.wav'));
+      } catch (e) {
+        print("Error playing sound: $e");
+      }
+    } else {
+      String message = "Not enough coins available for purchase";
+      showMessage(context, message);
+      try{
+        player.play(AssetSource('sounds/declined.mp3'));
+      } catch (e) {
+        print("Error playing sound: $e");
+      }
+    }
   }
 
   @override
@@ -78,15 +104,15 @@ class _MyHomePageState extends State<MyHomePage> {
               itemBuilder: (BuildContext context) =>
                   <PopupMenuEntry<SampleItem>>[
                 const PopupMenuItem<SampleItem>(
-                  value: SampleItem.itemOne,
+                  value: SampleItem.optionOne,
                   child: Text('Settings'),
                 ),
                 const PopupMenuItem<SampleItem>(
-                  value: SampleItem.itemTwo,
+                  value: SampleItem.optionTwo,
                   child: Text('Profile/Account'),
                 ),
                 const PopupMenuItem<SampleItem>(
-                  value: SampleItem.itemThree,
+                  value: SampleItem.optionThree,
                   child: Text('Social'),
                 ),
               ],
@@ -102,7 +128,9 @@ class _MyHomePageState extends State<MyHomePage> {
               children: <Widget>[
                 GestureDetector(
                   onTap: _incrementCounter,
-                  child: Image(image: AssetImage('assets/cat.png'), width: MediaQuery.of(context).size.width * 0.75),
+                  child: Image(
+                      image: AssetImage('assets/cat.png'),
+                      width: MediaQuery.of(context).size.width * 0.75),
                 ),
                 const Text('You have pet the cat this many times:'),
                 Text(
@@ -149,7 +177,22 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ],
-      ),bottomNavigationBar: const CustomBottomNav(),
+      ),
+      bottomNavigationBar: const CustomBottomNav(),
     );
+  }
+
+  void showMessage(BuildContext context, String message) {
+    final snackBar = SnackBar(
+      content: Center(
+        // Wrap the Text widget with Center
+        child: Text(
+          message,
+          textAlign: TextAlign
+              .center, // Optional: ensure text itself aligns center within the Center widget's bounds
+        ),
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

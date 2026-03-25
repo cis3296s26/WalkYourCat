@@ -4,7 +4,7 @@ import './shop_item.dart';
 
 class ShopService {
   static Future<List<ShopItem>> loadShopAssets() async {
-    final String response = await rootBundle.loadString('shop_items.json');
+    final String response = await rootBundle.loadString('assets/shop_items.json');
     
     final Map<String, dynamic> data = json.decode(response);
     
