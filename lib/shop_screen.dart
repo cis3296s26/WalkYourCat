@@ -3,47 +3,47 @@ import 'package:flutter/material.dart';
 // holds all the info for each tab: name, icon, and the two colors we use
 class ShopCategory {
   final String name;
-  final IconData icon;
-  final Color accent;  // the bold main color
-  final Color softBg;  // the light pastel background used on cards
+  final String emoji;        // emoji used as the tab icon
+  final Color accent;        // the bold main color
+  final Color softBg;        // the light pastel background used on cards
 
   const ShopCategory({
     required this.name,
-    required this.icon,
+    required this.emoji,
     required this.accent,
     required this.softBg,
   });
 }
 
-// the 5 categories in our shop, each with their own icon and colors
+// the 5 categories in our shop, each with their own emoji and colors
 const shopTabs = [
   ShopCategory(
     name: 'Food',
-    icon: Icons.restaurant_rounded,
+    emoji: '🍖',
     accent: Color(0xFFFF6B35),
     softBg: Color(0xFFFFF0EA),
   ),
   ShopCategory(
     name: 'Drink',
-    icon: Icons.local_drink_rounded,
+    emoji: '🥤',
     accent: Color(0xFF2196F3),
     softBg: Color(0xFFE8F4FD),
   ),
   ShopCategory(
     name: 'Toys',
-    icon: Icons.toys_rounded,
+    emoji: '🧸',
     accent: Color(0xFF9C27B0),
     softBg: Color(0xFFF3E8FA),
   ),
   ShopCategory(
     name: 'Cosmetic',
-    icon: Icons.auto_awesome_rounded,
+    emoji: '🕶️',
     accent: Color(0xFFE91E8C),
     softBg: Color(0xFFFDE8F3),
   ),
   ShopCategory(
     name: 'Medicine',
-    icon: Icons.medical_services_rounded,
+    emoji: '💊',
     accent: Color(0xFF00897B),
     softBg: Color(0xFFE0F4F2),
   ),
@@ -134,7 +134,7 @@ class ShopTopBanner extends StatelessWidget {
       ),
       // top padding accounts for the status bar height
       padding: EdgeInsets.fromLTRB(
-        20,
+        56,
         MediaQuery.of(context).padding.top + 6,
         20,
         12,
@@ -153,7 +153,7 @@ class ShopTopBanner extends StatelessWidget {
                       color: Colors.white, size: 22),
                   const SizedBox(width: 8),
                   const Text(
-                    'Shop', // will be changed later once we pick a name for it
+                    'MeowKet',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 26,
@@ -176,7 +176,7 @@ class ShopTopBanner extends StatelessWidget {
 
           const Spacer(),
 
-          // right side: balance 
+          // right side
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
@@ -226,7 +226,7 @@ class ShopTopBanner extends StatelessWidget {
   }
 }
 
-// scrollable category tabs below the header, with icons and active/inactive colors
+// scrollable category tabs below the header, with emoji-only labels and active/inactive colors
 class CategoryTabs extends StatelessWidget {
   final TabController controller;
   const CategoryTabs({super.key, required this.controller});
@@ -243,30 +243,16 @@ class CategoryTabs extends StatelessWidget {
         indicatorColor: shopTabs[controller.index].accent,
         indicatorWeight: 3,
         indicatorSize: TabBarIndicatorSize.label,
-        labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 106),
         tabs: shopTabs.map((tab) {
           final isActive = controller.index == shopTabs.indexOf(tab);
           return Tab(
             height: 48,
-            child: Row(
-              children: [
-                Icon(
-                  tab.icon,
-                  size: 16,
-                  // active tab gets full color, others go grey
-                  color: isActive ? tab.accent : Colors.grey.shade400,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  tab.name,
-                  style: TextStyle(
-                    color: isActive ? tab.accent : Colors.grey.shade500,
-                    fontWeight:
-                        isActive ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+            child: Text(
+              tab.emoji,
+              style: TextStyle(
+                fontSize: isActive ? 26 : 22,  // active emoji is slightly bigger
+              ),
             ),
           );
         }).toList(),
