@@ -107,10 +107,51 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
 
           /* ------- STEP COUNTER WIDGET --- */
-          const Positioned(
+          /* ------- STEP & COIN COUNTER WIDGETS --- */
+          Positioned(
             top: 16,
             left: 16,
-            child: StepCounter(title: 'Steps'),
+            child: Row(
+              children: [
+                // 1. Your existing StepCounter
+                StepCounter(
+                  title: 'Steps',
+                  onCoinsUpdated: (newTotal) {
+                    setState(() {
+                      _coins = newTotal;
+                    });
+                  },
+                ),
+                
+                const SizedBox(width: 8), // Adds a little space between the cards
+                
+                // 2. The New Coin UI 
+                Card(
+                  color: Colors.amber.shade600,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.monetization_on_rounded, 
+                          color: Colors.white, 
+                          size: 18,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$_coins',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
           /* ------- FLOATING SHOP BUTTON (bottom-left) --- */
