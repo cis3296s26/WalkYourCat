@@ -1,0 +1,257 @@
+{
+    "items": [
+        {
+            "id": 1,
+            "tag": "food",
+            "name": "Apple",
+            "price": 10,
+            "stats": {
+                "hunger": 10,
+                "health": 2
+            },
+            "description": "A delicious red apple, perfect for a warm summer day!"
+        },
+        {
+            "id": 2,
+            "tag": "food",
+            "name": "Fresh Bread",
+            "price": 15,
+            "stats": {
+                "hunger": 25,
+                "health": 5
+            },
+            "description": "Warm from the oven with a golden crust."
+        },
+        {
+            "id": 3,
+            "tag": "food",
+            "name": "Salted Beef",
+            "price": 30,
+            "stats": {
+                "hunger": 40,
+                "health": -2
+            },
+            "description": "Tough to chew, but very filling. Makes you thirsty."
+        },
+        {
+            "id": 4,
+            "tag": "food",
+            "name": "Bowl of Soup",
+            "price": 20,
+            "stats": {
+                "hunger": 20,
+                "health": 10
+            },
+            "description": "A comforting vegetable broth."
+        },
+        {
+            "id": 5,
+            "tag": "food",
+            "name": "Mysterious Mushroom",
+            "price": 5,
+            "stats": {
+                "hunger": 5,
+                "health": -10
+            },
+            "description": "It's glowing purple. That's probably fine, right?"
+        },
+        {
+            "id": 6,
+            "tag": "fun",
+            "name": "Wooden Yo-Yo",
+            "price": 12,
+            "stats": {
+                "hunger": -2,
+                "health": 2
+            },
+            "description": "Practicing tricks burns a bit of energy but lifts the spirits."
+        },
+        {
+            "id": 7,
+            "tag": "fun",
+            "name": "Bouncy Ball",
+            "price": 8,
+            "stats": {
+                "hunger": -5,
+                "health": 1
+            },
+            "description": "Chasing this around is great exercise."
+        },
+        {
+            "id": 8,
+            "tag": "fun",
+            "name": "Joke Book",
+            "price": 15,
+            "stats": {
+                "hunger": 0,
+                "health": 5
+            },
+            "description": "Laughter is the second best medicine."
+        },
+        {
+            "id": 9,
+            "tag": "fun",
+            "name": "Harmonica",
+            "price": 25,
+            "stats": {
+                "hunger": -3,
+                "health": 8
+            },
+            "description": "A bit of music makes the long nights more bearable."
+        },
+        {
+            "id": 10,
+            "tag": "fun",
+            "name": "Sparklers",
+            "price": 18,
+            "stats": {
+                "hunger": 0,
+                "health": 3
+            },
+            "description": "Bright, crackling, and momentarily mesmerizing."
+        },
+        {
+            "id": 11,
+            "tag": "drinks",
+            "name": "Fresh Water",
+            "price": 5,
+            "stats": {
+                "hunger": -2,
+                "health": 3
+            },
+            "description": "Pure, refreshing water to keep your cat hydrated."
+        },
+        {
+            "id": 12,
+            "tag": "drinks",
+            "name": "Milk",
+            "price": 12,
+            "stats": {
+                "hunger": 8,
+                "health": 5
+            },
+            "description": "Specially formulated milk for cat, safe and delicious."
+        },
+        {
+            "id": 13,
+            "tag": "drinks",
+            "name": "Salmon Broth",
+            "price": 20,
+            "stats": {
+                "hunger": 15,
+                "health": 8
+            },
+            "description": "Rich and savory broth made from fresh salmon."
+        },
+        {
+            "id": 14,
+            "tag": "drinks",
+            "name": "Herbal Infusion",
+            "price": 15,
+            "stats": {
+                "hunger": 5,
+                "health": 10
+            },
+            "description": "A calming herbal blend that soothes the soul."
+        },
+        {
+            "id": 15,
+            "tag": "medicine",
+            "name": "Small Bandage",
+            "price": 15,
+            "stats": {
+                "hunger": 0,
+                "health": 15
+            },
+            "description": "Stops the bleeding and protects the wound."
+        },
+        {
+            "id": 12,
+            "tag": "medicine",
+            "name": "Bitter Tincture",
+            "price": 40,
+            "stats": {
+                "hunger": -10,
+                "health": 40
+            },
+            "description": "Tastes awful, works wonders. Your stomach might protest."
+        },
+        {
+            "id": 13,
+            "tag": "medicine",
+            "name": "Vitamin Gummy",
+            "price": 5,
+            "stats": {
+                "hunger": 2,
+                "health": 5
+            },
+            "description": "Chewy, sweet, and moderately helpful."
+        },
+        {
+            "id": 14,
+            "tag": "medicine",
+            "name": "First Aid Kit",
+            "price": 100,
+            "stats": {
+                "hunger": 0,
+                "health": 80
+            },
+            "description": "A professional-grade medical pack for serious injuries."
+        },
+        {
+            "id": 15,
+            "tag": "medicine",
+            "name": "Herbal Tea",
+            "price": 12,
+            "stats": {
+                "hunger": 5,
+                "health": 12
+            },
+            "description": "A soothing brew that settles the stomach and heals the body."
+        },
+        {
+            "id": 16,
+            "tag": "cosmetic",
+            "name": "Pink Bow",
+            "price": 20,
+            "stats": {
+                "hunger": 0,
+                "health": 0
+            },
+            "description": "An adorable pink bow to make your cat look fancy."
+        },
+        {
+            "id": 17,
+            "tag": "cosmetic",
+            "name": "Golden Collar",
+            "price": 50,
+            "stats": {
+                "hunger": 0,
+                "health": 0
+            },
+            "description": "A luxurious golden collar that gleams in the sunlight."
+        },
+        {
+            "id": 18,
+            "tag": "cosmetic",
+            "name": "Bell Accessory",
+            "price": 15,
+            "stats": {
+                "hunger": 0,
+                "health": 0
+            },
+            "description": "A cute bell accessory that jingles when your cat moves."
+        },
+        {
+            "id": 19,
+            "tag": "cosmetic",
+            "name": "Flower Crown",
+            "price": 25,
+            "stats": {
+                "hunger": 0,
+                "health": 0
+            },
+            "description": "A delicate crown of flowers to make your cat look majestic."
+        }
+    ]
+}

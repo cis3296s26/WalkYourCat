@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'steps.dart';
-import 'package:walkyourcat/navbar.dart';
+import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/shop_screen.dart';
+import 'package:walkyourcat/navbar.dart';
 
 enum SampleItem { itemOne, itemTwo, itemThree }
 
@@ -16,12 +16,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'WalkYourCat',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'WalkYourCat Scrum 1 Demo'),
     );
   }
 }
@@ -97,7 +97,11 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                const Text('You have pushed the button this many times:'),
+                GestureDetector(
+                  onTap: _incrementCounter,
+                  child: Image(image: AssetImage('assets/cat.png'), width: MediaQuery.of(context).size.width * 0.75),
+                ),
+                const Text('You have pet the cat this many times:'),
                 Text(
                   '$_counter',
                   style: Theme.of(context).textTheme.headlineMedium,
@@ -183,13 +187,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ),
         ],
-      ),
-      bottomNavigationBar: const CustomBottomNav(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      ),bottomNavigationBar: const CustomBottomNav(),
     );
   }
 }
