@@ -112,6 +112,50 @@
         },
         {
             "id": 11,
+            "tag": "drinks",
+            "name": "Fresh Water",
+            "price": 5,
+            "stats": {
+                "hunger": -2,
+                "health": 3
+            },
+            "description": "Pure, refreshing water to keep your cat hydrated."
+        },
+        {
+            "id": 12,
+            "tag": "drinks",
+            "name": "Milk",
+            "price": 12,
+            "stats": {
+                "hunger": 8,
+                "health": 5
+            },
+            "description": "Specially formulated milk for cat, safe and delicious."
+        },
+        {
+            "id": 13,
+            "tag": "drinks",
+            "name": "Salmon Broth",
+            "price": 20,
+            "stats": {
+                "hunger": 15,
+                "health": 8
+            },
+            "description": "Rich and savory broth made from fresh salmon."
+        },
+        {
+            "id": 14,
+            "tag": "drinks",
+            "name": "Herbal Infusion",
+            "price": 15,
+            "stats": {
+                "hunger": 5,
+                "health": 10
+            },
+            "description": "A calming herbal blend that soothes the soul."
+        },
+        {
+            "id": 15,
             "tag": "medicine",
             "name": "Small Bandage",
             "price": 15,
