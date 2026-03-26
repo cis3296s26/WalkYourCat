@@ -1,10 +1,9 @@
 // IMPORT STATEMENTS
-import 'package:shared_preferences/shared_preferences.dart';    // for storing coin balance persistently
+import 'package:shared_preferences/shared_preferences.dart'; // for storing coin balance persistently
 
 class StepCurrencyManager {
-
   /* ----- VARIABLE DECLARATIONS ----- */
-  int totalCoins = 0;       // total coins earned
+  int totalCoins = 0; // total coins earned
   int lastCheckedSteps = 0; // last step count when steps were processed for coins
   int unprocessedSteps = 0; // steps that have been fetched but not processed for coins yet
   /* -- END OF VARIABLE DECLARATIONS -- */
@@ -13,9 +12,9 @@ class StepCurrencyManager {
   /// This method loads the saved state of coins and steps from persistent storage.
   Future<void> loadState() async {
     final SharedPreferences prefsL = await SharedPreferences.getInstance();
-    totalCoins = prefsL.getInt('totalCoins') ?? 0;
-    lastCheckedSteps = prefsL.getInt('lastCheckedSteps') ?? 0;
-    unprocessedSteps = prefsL.getInt('unprocessedSteps') ?? 0;
+    totalCoins = prefsL.getInt('totalCoins') ?? totalCoins;
+    lastCheckedSteps = prefsL.getInt('lastCheckedSteps') ?? lastCheckedSteps;
+    unprocessedSteps = prefsL.getInt('unprocessedSteps') ?? unprocessedSteps;
   }
 
   /// This method saves the current state of coins and steps to persistent storage.
@@ -27,13 +26,11 @@ class StepCurrencyManager {
   }
   /* --- END OF LOAD & SAVE FUNCTIONS --- */
 
-
   /// This method processes new steps and updates the coin balance accordingly.
   Future<void> processNewSteps(int steps) async {
     /* --- variables --- */
-    int newSteps = 0;     // initialize new steps variable
+    int newSteps = 0; // initialize new steps variable
 
-    
     // check if steps were added since we last checked
     if (steps >= lastCheckedSteps) {
       newSteps = steps - lastCheckedSteps;
@@ -46,7 +43,6 @@ class StepCurrencyManager {
     lastCheckedSteps = steps;
     unprocessedSteps += newSteps;
 
-
     // convert steps to coins (10 coins per 100 steps)
     if (unprocessedSteps >= 100) {
       int coinsEarned = (unprocessedSteps / 100).floor() * 10;
@@ -57,6 +53,17 @@ class StepCurrencyManager {
     }
 
     // save the updated state
+    await saveState();
+  }
+
+  Future<int> getCoinBalance() async {
+    await loadState(); // ensure we have the latest state loaded
+    return totalCoins;
+  }
+
+  Future<void> setCoinBalance(int coins) async {
+    await loadState();
+    totalCoins = coins;
     await saveState();
   }
 }

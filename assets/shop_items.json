@@ -2,6 +2,7 @@
     "items": [
         {
             "id": 1,
+            "image": "assets/images/apple.png",
             "tag": "food",
             "name": "Apple",
             "price": 10,
