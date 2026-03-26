@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late Future<void> Function(GlobalKey) runAddToCartAnimation;
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
-  /*Uncomment 2 methods below to test with a starting balance of 100 coins */
+  /*Uncomment 3 methods below to test with a starting balance of 100 coins */
   // @override
   // void initState() {
   //   super.initState();
@@ -59,13 +59,13 @@ class _MyHomePageState extends State<MyHomePage> {
   //   await _loadCoins();
   // }
 
-  Future<void> _loadCoins() async {
-    final coins = await _currencyManager.getCoinBalance();
-    if (!mounted) return;
-    setState(() {
-      _coins = coins;
-    });
-  }
+  // Future<void> _loadCoins() async {
+  //   final coins = await _currencyManager.getCoinBalance();
+  //   if (!mounted) return;
+  //   setState(() {
+  //     _coins = coins;
+  //   });
+  // }
 
   void _incrementCounter() {
     setState(() {
