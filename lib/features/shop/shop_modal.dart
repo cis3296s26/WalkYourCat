@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import './shop_item.dart';
 import './shop_service.dart';
 
 void showShopModal({
   required BuildContext context,
-  required Function(ShopItem) onItemTap,
+  required Future<bool> Function(ShopItem, GlobalKey) onItemTap,
   int coins = 0,
 }) {
   showDialog<void>(
@@ -25,7 +26,7 @@ class _ShopModal extends StatelessWidget {
   });
 
   final int coins;
-  final Function(ShopItem) onItemTap;
+  final Future<bool> Function(ShopItem, GlobalKey) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +142,7 @@ class _ShopModalCard extends StatelessWidget {
 
   final int coins;
   final List<ShopItem> items;
-  final Function(ShopItem) onItemTap;
+  final Future<bool> Function(ShopItem, GlobalKey) onItemTap;
 
   static const List<_ShopCategory> _categories = [
     _ShopCategory(
@@ -150,6 +151,13 @@ class _ShopModalCard extends StatelessWidget {
       icon: Icons.restaurant_rounded,
       accent: Color(0xFFFF7043),
       soft: Color(0xFFFFF0EA),
+    ),
+    _ShopCategory(
+      tag: 'drinks',
+      label: 'Drinks',
+      icon: Icons.local_drink_rounded,
+      accent: Color(0xFF2196F3),
+      soft: Color(0xFFE3F2FD),
     ),
     _ShopCategory(
       tag: 'fun',
@@ -164,6 +172,13 @@ class _ShopModalCard extends StatelessWidget {
       icon: Icons.medical_services_rounded,
       accent: Color(0xFF26A69A),
       soft: Color(0xFFE6F7F5),
+    ),
+    _ShopCategory(
+      tag: 'cosmetic',
+      label: 'Cosmetic',
+      icon: FontAwesomeIcons.glasses,
+      accent: Color(0xFFE91E8C),
+      soft: Color(0xFFFDE8F3),
     ),
   ];
 
@@ -202,9 +217,8 @@ class _ShopModalCard extends StatelessWidget {
             Expanded(
               child: TabBarView(
                 children: activeCategories.map((category) {
-                  final categoryItems = items
-                      .where((item) => item.tag == category.tag)
-                      .toList();
+                  final categoryItems =
+                      items.where((item) => item.tag == category.tag).toList();
                   return ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: categoryItems.length,
@@ -215,9 +229,11 @@ class _ShopModalCard extends StatelessWidget {
                         item: item,
                         accent: category.accent,
                         soft: category.soft,
-                        onTap: () {
-                          onItemTap(item);
-                          Navigator.of(context).pop();
+                        onTap: (itemKey) async {
+                          await onItemTap(item, itemKey);
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                          }
                         },
                       );
                     },
@@ -321,15 +337,17 @@ class _ShopItemCard extends StatelessWidget {
   final ShopItem item;
   final Color accent;
   final Color soft;
-  final VoidCallback onTap;
+  final Future<void> Function(GlobalKey) onTap;
 
   @override
   Widget build(BuildContext context) {
+    final itemKey = GlobalKey();
+
     return Material(
       color: soft,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
-        onTap: onTap,
+        onTap: () => onTap(itemKey),
         borderRadius: BorderRadius.circular(22),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -337,17 +355,14 @@ class _ShopItemCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
+                key: itemKey,
                 width: 52,
                 height: 52,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  _iconForTag(item.tag),
-                  color: accent,
-                  size: 28,
-                ),
+                child: _buildItemVisual(item, accent),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -406,14 +421,41 @@ class _ShopItemCard extends StatelessWidget {
     );
   }
 
+  static Widget _buildItemVisual(ShopItem item, Color accent) {
+    if (item.image != null && item.image!.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: Image.asset(
+          item.image!,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(
+            _iconForTag(item.tag),
+            color: accent,
+            size: 28,
+          ),
+        ),
+      );
+    }
+
+    return Icon(
+      _iconForTag(item.tag),
+      color: accent,
+      size: 28,
+    );
+  }
+
   static IconData _iconForTag(String tag) {
     switch (tag) {
       case 'food':
         return Icons.lunch_dining_rounded;
+      case 'drinks':
+        return Icons.local_drink_rounded;
       case 'medicine':
         return Icons.medication_rounded;
       case 'fun':
         return Icons.sports_esports_rounded;
+      case 'cosmetic':
+        return Icons.checkroom_rounded;
       default:
         return Icons.inventory_2_rounded;
     }

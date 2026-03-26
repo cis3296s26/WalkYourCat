@@ -5,6 +5,7 @@ import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
+import 'package:walkyourcat/stepcurrency_manager.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
@@ -39,11 +40,32 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  int _coins = 100; // your coin balance
   SampleItem? _selectedItem;
   final player = AudioPlayer();
   GlobalKey<CartIconKey> inventoryKey = GlobalKey<CartIconKey>();
-  late Function(GlobalKey) runAddToCartAnimation;
+  late Future<void> Function(GlobalKey) runAddToCartAnimation;
+  int _coins = 0;
+  final StepCurrencyManager _currencyManager = StepCurrencyManager();
+  /*Uncomment 2 methods below to test with a starting balance of 100 coins */
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _initializeCoins();
+  // }
+
+  // Future<void> _initializeCoins() async {
+  //   // Temporary test seed so the shop starts with 100 coins.
+  //   await _currencyManager.setCoinBalance(100);
+  //   await _loadCoins();
+  // }
+
+  Future<void> _loadCoins() async {
+    final coins = await _currencyManager.getCoinBalance();
+    if (!mounted) return;
+    setState(() {
+      _coins = coins;
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -63,25 +85,30 @@ class _MyHomePageState extends State<MyHomePage> {
       coins: _coins,
       // This is the callback function, technically this logic can also live
       // in the modal itself but tbh I was unsure what made more sense
-      onItemTap: (item) {
+      onItemTap: (item, itemKey) {
         print("User clicked on ${item.name} which costs ${item.price}!");
-        purchaseItem(item);
+        return purchaseItem(item, itemKey);
       },
     );
   }
 
-  void purchaseItem(ShopItem item) {
+  Future<bool> purchaseItem(ShopItem item, GlobalKey itemKey) async {
     if (_coins >= item.price) {
       setState(() {
-        _coins = _coins - item.price;
+        _coins -= item.price;
         print(
             "Purchased ${item.name} for ${item.price} coins! Remaining balance: $_coins coins.");
       });
+      _currencyManager.setCoinBalance(_coins);
+
+      runAddToCartAnimation(itemKey);
+
       try {
         player.play(AssetSource('sounds/purchase.wav'));
       } catch (e) {
         print("Error playing sound: $e");
       }
+      return true;
     } else {
       String message = "Not enough coins available for purchase";
       showMessage(context, message);
@@ -90,6 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
       } catch (e) {
         print("Error playing sound: $e");
       }
+      return false;
     }
   }
 
@@ -150,53 +178,51 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
 
-          /* ------- STEP COUNTER WIDGET --- */
-          /* ------- STEP & COIN COUNTER WIDGETS --- */
-          Positioned(
-            top: 16,
-            left: 16,
-            child: Row(
-              children: [
-                // 1. Your existing StepCounter
-                StepCounter(
-                  title: 'Steps',
-                  onCoinsUpdated: (newTotal) {
-                    setState(() {
-                      _coins = newTotal;
-                    });
-                  },
-                ),
-                
-                const SizedBox(width: 8), // Adds a little space between the cards
-                
-                // 2. The New Coin UI 
-                Card(
-                  color: Colors.amber.shade600,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.monetization_on_rounded, 
-                          color: Colors.white, 
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$_coins',
-                          style: const TextStyle(
+            /* ------- STEP & COIN COUNTER WIDGETS --- */
+            Positioned(
+              top: 16,
+              left: 16,
+              child: Row(
+                children: [
+                  StepCounter(
+                    title: 'Steps',
+                    onCoinsUpdated: (newTotal) {
+                      setState(() {
+                        _coins = newTotal;
+                      });
+                    },
+                  ),
+
+                  const SizedBox(
+                      width: 8), // Adds a little space between the cards
+                  Card(
+                    color: Colors.amber.shade600,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 8.0),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.monetization_on_rounded,
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            size: 18,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Text(
+                            '$_coins',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
             Positioned(
@@ -250,6 +276,9 @@ class _MyHomePageState extends State<MyHomePage> {
                     child: AddToCartIcon(
                       key: inventoryKey,
                       icon: const Icon(Icons.inventory),
+                      badgeOptions: const BadgeOptions(
+                        active: false,
+                      ),
                     )),
               ),
             ),

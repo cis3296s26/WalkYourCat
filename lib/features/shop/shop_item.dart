@@ -14,6 +14,7 @@ class ItemStats {
 
 class ShopItem {
   final int id;
+  final String? image; // Optional image path
   final String tag;
   final String name;
   final int price;
@@ -22,6 +23,7 @@ class ShopItem {
 
   ShopItem({
     required this.id,
+    required this.image,
     required this.tag,
     required this.name,
     required this.price,
@@ -32,6 +34,7 @@ class ShopItem {
   factory ShopItem.fromJson(Map<String, dynamic> json) {
     return ShopItem(
       id: json['id'],
+      image: json['image'],
       tag: json['tag'],
       name: json['name'],
       price: json['price'],
