@@ -60,6 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openShop() {
     showShopModal(
       context: context,
+      coins: _coins,
       // This is the callback function, technically this logic can also live
       // in the modal itself but tbh I was unsure what made more sense
       onItemTap: (item) {
