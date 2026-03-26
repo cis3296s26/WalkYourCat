@@ -91,16 +91,31 @@ class StepCounterState extends State<StepCounter> {
   Widget build(BuildContext context) {
     return Card(
       color: Colors.deepPurple,
-      child: Row(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+        child: Row(
           children: [
+            const Icon(
+              Icons.directions_walk_rounded,
+              color: Colors.white,
+              size: 18,
+            ),
+            const SizedBox(width: 4),
             Text(
-              '$_steps steps',
+              _steps,
               style: const TextStyle(
                 color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
               ),
             ),
           ],
         ),
+      ),
     );
   }
   /* ---- END OF BUILD FUNCTION ---- */
