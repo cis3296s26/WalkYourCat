@@ -1,51 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 
 // holds all the info for each tab: name, icon, and the two colors we use
 class ShopCategory {
   final String name;
-  final IconData icon;
-  final Color accent;  // the bold main color
-  final Color softBg;  // the light pastel background used on cards
+  final String tag;
+  final IconData icon;       // material icon used as the tab icon
+  final Color accent;        // the bold main color
+  final Color softBg;        // the light pastel background used on cards
 
   const ShopCategory({
     required this.name,
+    required this.tag,
     required this.icon,
     required this.accent,
     required this.softBg,
   });
 }
 
-// the 5 categories in our shop, each with their own icon and colors
 const shopTabs = [
   ShopCategory(
     name: 'Food',
-    icon: Icons.restaurant_rounded,
+    tag: 'food',
+    icon: FontAwesomeIcons.utensils,
     accent: Color(0xFFFF6B35),
     softBg: Color(0xFFFFF0EA),
   ),
   ShopCategory(
-    name: 'Drink',
-    icon: Icons.local_drink_rounded,
+    name: 'Drinks',
+    tag: 'drinks',
+    icon: FontAwesomeIcons.glassWater,
     accent: Color(0xFF2196F3),
-    softBg: Color(0xFFE8F4FD),
+    softBg: Color(0xFFE3F2FD),
   ),
   ShopCategory(
-    name: 'Toys',
-    icon: Icons.toys_rounded,
+    name: 'Fun',
+    tag: 'fun',
+    icon: FontAwesomeIcons.horse,
     accent: Color(0xFF9C27B0),
     softBg: Color(0xFFF3E8FA),
   ),
   ShopCategory(
-    name: 'Cosmetic',
-    icon: Icons.auto_awesome_rounded,
-    accent: Color(0xFFE91E8C),
-    softBg: Color(0xFFFDE8F3),
-  ),
-  ShopCategory(
     name: 'Medicine',
-    icon: Icons.medical_services_rounded,
+    tag: 'medicine',
+    icon: FontAwesomeIcons.kitMedical,
     accent: Color(0xFF00897B),
     softBg: Color(0xFFE0F4F2),
+  ),
+  ShopCategory(
+    name: 'Cosmetic',
+    tag: 'cosmetic',
+    icon: FontAwesomeIcons.glasses,
+    accent: Color(0xFFE91E8C),
+    softBg: Color(0xFFFDE8F3),
   ),
 ];
 
@@ -61,6 +70,7 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen>
     with SingleTickerProviderStateMixin {
   late TabController tabController;
+  List<dynamic> allItems = [];
 
   @override
   void initState() {
@@ -69,6 +79,19 @@ class _ShopScreenState extends State<ShopScreen>
     tabController = TabController(length: shopTabs.length, vsync: this);
     // rebuild when user taps a different tab so the header color updates
     tabController.addListener(() => setState(() {}));
+    _loadItems();
+  }
+
+  Future<void> _loadItems() async {
+    try {
+      final jsonString = await rootBundle.loadString('assets/shop_items.json');
+      final data = jsonDecode(jsonString);
+      setState(() {
+        allItems = data['items'] ?? [];
+      });
+    } catch (e) {
+      debugPrint('Error loading shop items: $e');
+    }
   }
 
   @override
@@ -107,7 +130,7 @@ class _ShopScreenState extends State<ShopScreen>
         ],
         body: TabBarView(
           controller: tabController,
-          children: shopTabs.map((tab) => ItemGrid(tab: tab)).toList(),
+          children: shopTabs.map((tab) => ItemGrid(tab: tab, items: allItems)).toList(),
         ),
       ),
     );
@@ -134,7 +157,7 @@ class ShopTopBanner extends StatelessWidget {
       ),
       // top padding accounts for the status bar height
       padding: EdgeInsets.fromLTRB(
-        20,
+        56,
         MediaQuery.of(context).padding.top + 6,
         20,
         12,
@@ -153,7 +176,7 @@ class ShopTopBanner extends StatelessWidget {
                       color: Colors.white, size: 22),
                   const SizedBox(width: 8),
                   const Text(
-                    'Shop', // will be changed later once we pick a name for it
+                    'MeowKet',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 26,
@@ -176,7 +199,7 @@ class ShopTopBanner extends StatelessWidget {
 
           const Spacer(),
 
-          // right side: balance 
+          // right side
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
             decoration: BoxDecoration(
@@ -226,7 +249,7 @@ class ShopTopBanner extends StatelessWidget {
   }
 }
 
-// scrollable category tabs below the header, with icons and active/inactive colors
+// scrollable category tabs below the header, with icon-only labels and active/inactive colors
 class CategoryTabs extends StatelessWidget {
   final TabController controller;
   const CategoryTabs({super.key, required this.controller});
@@ -243,30 +266,15 @@ class CategoryTabs extends StatelessWidget {
         indicatorColor: shopTabs[controller.index].accent,
         indicatorWeight: 3,
         indicatorSize: TabBarIndicatorSize.label,
-        labelPadding: const EdgeInsets.symmetric(horizontal: 16),
+        labelPadding: const EdgeInsets.symmetric(horizontal: 106),
         tabs: shopTabs.map((tab) {
           final isActive = controller.index == shopTabs.indexOf(tab);
           return Tab(
             height: 48,
-            child: Row(
-              children: [
-                Icon(
-                  tab.icon,
-                  size: 16,
-                  // active tab gets full color, others go grey
-                  color: isActive ? tab.accent : Colors.grey.shade400,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  tab.name,
-                  style: TextStyle(
-                    color: isActive ? tab.accent : Colors.grey.shade500,
-                    fontWeight:
-                        isActive ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+            child: Icon(
+              tab.icon,
+              size: isActive ? 26 : 22,   // active icon is slightly bigger
+              color: isActive ? tab.accent : Colors.grey.shade400,
             ),
           );
         }).toList(),
@@ -278,10 +286,13 @@ class CategoryTabs extends StatelessWidget {
 // 2 rows × 2 columns of placeholder cards for each category, all saying "coming soon" for now
 class ItemGrid extends StatelessWidget {
   final ShopCategory tab;
-  const ItemGrid({super.key, required this.tab});
+  final List<dynamic> items;
+  const ItemGrid({super.key, required this.tab, required this.items});
 
   @override
   Widget build(BuildContext context) {
+    final filteredItems = items.where((item) => item['tag'] == tab.tag).toList();
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -290,8 +301,18 @@ class ItemGrid extends StatelessWidget {
         mainAxisSpacing: 12,
         childAspectRatio: 0.88, // slightly taller than wide
       ),
-      itemCount: 4, // 4 placeholder cards (2 rows × 2 cols)
-      itemBuilder: (context, i) => PlaceholderCard(tab: tab),
+      itemCount: filteredItems.isEmpty ? 1 : filteredItems.length,
+      itemBuilder: (context, i) {
+        if (filteredItems.isEmpty) {
+          return Center(
+            child: Text(
+              'No items available',
+              style: TextStyle(color: Colors.grey.shade400),
+            ),
+          );
+        }
+        return PlaceholderCard(tab: tab, item: filteredItems[i]);
+      },
     );
   }
 }
@@ -299,7 +320,8 @@ class ItemGrid extends StatelessWidget {
 // a single card in the item grid, with a tinted image area and some skeleton-style placeholders for text, all styled based on the category's colors
 class PlaceholderCard extends StatelessWidget {
   final ShopCategory tab;
-  const PlaceholderCard({super.key, required this.tab});
+  final dynamic item;
+  const PlaceholderCard({super.key, required this.tab, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -345,29 +367,30 @@ class PlaceholderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                // fake title bar (skeleton-style placeholder)
-                Container(
-                  height: 10,
-                  width: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(6),
+                // actual item name
+                Text(
+                  item['name'] ?? 'Unknown',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
 
-                // fake subtitle bar
-                Container(
-                  height: 8,
-                  width: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(6),
+                // price display
+                Text(
+                  '${item['price'] ?? 0} coins',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: tab.accent,
                   ),
                 ),
                 const SizedBox(height: 10),
 
-                // "coming soon" badge in the category's soft color
+                // "Buy" button in the category's soft color
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
@@ -376,7 +399,7 @@ class PlaceholderCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Coming soon',
+                    'Buy',
                     style: TextStyle(
                       color: tab.accent,
                       fontSize: 10,
