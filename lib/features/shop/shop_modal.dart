@@ -409,7 +409,7 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _StatChip(
-                          label: '${item.price} gold',
+                          label: '${item.price}',
                           background: Colors.white,
                           foreground: accent,
                           coin: const Icon(
