@@ -201,6 +201,8 @@ class _ShopModalCard extends StatelessWidget {
               color: const Color(0xFFFFFBF7),
               child: TabBar(
                 isScrollable: true,
+                labelStyle: TextStyle(color: Color(0xFF2C1F17)),
+                unselectedLabelStyle: TextStyle(color: Color(0xFFFFFBF7)),
                 indicatorColor: const Color.fromARGB(255, 255, 215, 64),
                 tabs: activeCategories
                     .map(
