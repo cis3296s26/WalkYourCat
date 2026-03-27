@@ -412,6 +412,11 @@ class _ShopItemCard extends StatelessWidget {
                           label: '${item.price} gold',
                           background: Colors.white,
                           foreground: accent,
+                          coin: const Icon(
+                            Icons.monetization_on_rounded,
+                            color: Colors.amberAccent,
+                            size: 14,
+                          ),
                         ),
             ],
           ),
@@ -471,11 +476,13 @@ class _StatChip extends StatelessWidget {
     required this.label,
     required this.background,
     required this.foreground,
+    this.coin,
   });
 
   final String label;
   final Color background;
   final Color foreground;
+  final Icon? coin;
 
   @override
   Widget build(BuildContext context) {
@@ -485,7 +492,10 @@ class _StatChip extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [ 
+        Text(
         label,
         style: TextStyle(
           color: foreground,
@@ -493,6 +503,12 @@ class _StatChip extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+      if (coin != null) ...[
+          const SizedBox(width: 4),
+          coin!,
+        ],
+      ],
+      )
     );
   }
 }
