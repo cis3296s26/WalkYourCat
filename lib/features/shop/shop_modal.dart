@@ -201,13 +201,13 @@ class _ShopModalCard extends StatelessWidget {
               color: const Color(0xFFFFFBF7),
               child: TabBar(
                 isScrollable: true,
-                labelColor: const Color(0xFF2C1F17),
-                unselectedLabelColor: Colors.grey.shade500,
-                indicatorColor: const Color(0xFFFF7043),
+                labelStyle: TextStyle(color: Color(0xFF2C1F17)),
+                unselectedLabelStyle: TextStyle(color: Color(0xFFFFFBF7)),
+                indicatorColor: const Color.fromARGB(255, 255, 215, 64),
                 tabs: activeCategories
                     .map(
                       (category) => Tab(
-                        icon: Icon(category.icon, size: 18),
+                        icon: Icon(category.icon, size: 18, color: Colors.grey.shade500),
                         text: category.label,
                       ),
                     )
@@ -259,7 +259,7 @@ class _ShopHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 14, 16),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFF8A65), Color(0xFFFF7043)],
+          colors: [Color.fromARGB(255, 220, 20, 60), Color.fromARGB(255, 136, 8, 8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -391,11 +391,6 @@ class _ShopItemCard extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _StatChip(
-                          label: '${item.price} gold',
-                          background: Colors.white,
-                          foreground: accent,
-                        ),
-                        _StatChip(
                           label: 'Hunger ${_signed(item.stats.hunger)}',
                           background: Colors.white.withValues(alpha: 0.75),
                           foreground: const Color(0xFF8D5A2B),
@@ -413,7 +408,16 @@ class _ShopItemCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.chevron_right_rounded, color: accent),
+              _StatChip(
+                          label: '${item.price}',
+                          background: Colors.white,
+                          foreground: accent,
+                          coin: const Icon(
+                            Icons.monetization_on_rounded,
+                            color: Colors.amberAccent,
+                            size: 14,
+                          ),
+                        ),
             ],
           ),
         ),
@@ -472,11 +476,13 @@ class _StatChip extends StatelessWidget {
     required this.label,
     required this.background,
     required this.foreground,
+    this.coin,
   });
 
   final String label;
   final Color background;
   final Color foreground;
+  final Icon? coin;
 
   @override
   Widget build(BuildContext context) {
@@ -486,7 +492,10 @@ class _StatChip extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [ 
+        Text(
         label,
         style: TextStyle(
           color: foreground,
@@ -494,6 +503,12 @@ class _StatChip extends StatelessWidget {
           fontWeight: FontWeight.w700,
         ),
       ),
+      if (coin != null) ...[
+          const SizedBox(width: 4),
+          coin!,
+        ],
+      ],
+      )
     );
   }
 }
