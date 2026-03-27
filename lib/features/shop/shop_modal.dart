@@ -201,13 +201,11 @@ class _ShopModalCard extends StatelessWidget {
               color: const Color(0xFFFFFBF7),
               child: TabBar(
                 isScrollable: true,
-                labelColor: const Color(0xFF2C1F17),
-                unselectedLabelColor: Colors.grey.shade500,
-                indicatorColor: const Color(0xFFFF7043),
+                indicatorColor: const Color.fromARGB(255, 255, 215, 64),
                 tabs: activeCategories
                     .map(
                       (category) => Tab(
-                        icon: Icon(category.icon, size: 18),
+                        icon: Icon(category.icon, size: 18, color: Colors.grey.shade500),
                         text: category.label,
                       ),
                     )
@@ -259,7 +257,7 @@ class _ShopHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 14, 16),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFFF8A65), Color(0xFFFF7043)],
+          colors: [Color.fromARGB(255, 220, 20, 60), Color.fromARGB(255, 136, 8, 8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
