@@ -4,6 +4,10 @@ WalkYourCat is for people who want motivation to increase their daily physical a
 
 ![This is a screenshot.](week2picture.png)
 
+## UML Class Diagram
+
+![Class Diagram](UMLclassDiagram.png)
+
 ## Getting Started
 
 To run and build WalkYourCat, install the flutter SDK. Flutter has [helpful instructions](https://docs.flutter.dev/install) for installation.
