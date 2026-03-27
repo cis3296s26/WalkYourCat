@@ -1,9 +1,6 @@
-# Walk Your Cat
-
-CIS 3296 Final Project
-
-# Walk Your Cat
-Walk Your Cat is for people who want motivation to increase their daily physical activity and exercise. Walk Your Cat is a fitness app grounded in game theory that allows users to convert their physical activity into a positive response loop by taking care of their virtual pet.
+# WalkYourCat
+## CIS 3296 Final Project
+WalkYourCat is for people who want motivation to increase their daily physical activity and exercise. It is a fitness app grounded in game theory that allows users to convert their physical activity into a positive response loop by taking care of their virtual pet.
 
 ![This is a screenshot.](week2picture.png)
 
@@ -16,29 +13,37 @@ For help getting started with Flutter development in general, view the
 samples, guidance on mobile development, and a full API reference.
 
 ## How to run
-- If its the first time running do the following 
+- If it's your first time running do the following 
 
-```flutter doctor -v```
+```
+flutter doctor -v
+```
 
-### fix errors first before continuing
+### fix errors first before continuing:
 ```
 flutter clean
 flutter get pub
-flutter run
 ```
 - If the above steps have been done before just skip to the next command
 - Download the latest binary from the Release section on the right on GitHub.  
-- On the command line run
+- On the command line do:
 ```
-flutter run
+flutter devices
 ```
-- Once it's started select the device/emulator to test the app for example
+- This command checks for devices available to run the app on.
+
+for example
 ```
 [1]: macOS (macos)
 [2]: Windows (windows)
 [3]: Chrome (chrome)
+```
 
-or a device if one is connected such as an android or iPhone
+or a device if one is connected such as an Android or iPhone
+
+- Once you select your chosen device/emulator to test the app, do:
+```
+flutter run <device-name>
 ```
 - You will see the app open up on the browser or the phone
 
@@ -55,12 +60,12 @@ Follow this project board to know the latest status of the project: [https://git
 ## How to build an executable
 ### Android
 ```
-    cd [project]
+    cd WalkYourCat
     flutter build apk --split-per-abi
 ```
-From the Command line
+From the Command line directly to your device:
 - Connect your Android-powered device to your computer with a USB cable.
-- Enter ```cd [project]```
+- Enter ```cd WalkYourCat```
 - Run  ```flutter install```
 ### iOS (on macOS only)
 Instructions in Progress...
@@ -83,11 +88,14 @@ Instructions in Progress...
 
 ## How to install
 ### Android
+To install directly from the command line to your device, follow the instructions listed above in "How to Build an Executable" for Android.
+
+To install from the apk:
 - Download the ```.apk``` file from the latest [release](https://github.com/cis3296s26/WalkYourCat/releases) to your device.
 - After downloading the file to your Android device, run the ```.apk``` and give it the permission to install WalkYourCat.
 
 
-Note: If using an Android emulator, the ```.apk``` file can be dragged and dropped from the file explorer of your operating system to anywhere on the emulator screen. Alternatively, one can run ```adb install path\to\apk``` to transfer the file to the emulator. Subsequently, the above step can be performed to install the app using the ```.apk```.
+Note: If using an Android emulator (in Android Studio), the ```.apk``` file can be dragged and dropped from the file explorer of your operating system to anywhere on the emulator screen. Alternatively, one can run ```adb install path\to\apk``` to transfer the file to the emulator. Subsequently, the above step can be performed to install the app using the ```.apk```.
 
 ### iOS (on macOS only)
 Instructions in Progress...
