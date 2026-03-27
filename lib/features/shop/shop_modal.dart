@@ -391,11 +391,6 @@ class _ShopItemCard extends StatelessWidget {
                       runSpacing: 8,
                       children: [
                         _StatChip(
-                          label: '${item.price} gold',
-                          background: Colors.white,
-                          foreground: accent,
-                        ),
-                        _StatChip(
                           label: 'Hunger ${_signed(item.stats.hunger)}',
                           background: Colors.white.withValues(alpha: 0.75),
                           foreground: const Color(0xFF8D5A2B),
@@ -413,7 +408,11 @@ class _ShopItemCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Icon(Icons.chevron_right_rounded, color: accent),
+              _StatChip(
+                          label: '${item.price} gold',
+                          background: Colors.white,
+                          foreground: accent,
+                        ),
             ],
           ),
         ),
