@@ -6,6 +6,7 @@ import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
+import 'package:walkyourcat/features/inventory/inventory_modal.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
@@ -77,6 +78,16 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _selectedItem = item;
     });
+  }
+
+  void _openInventory() {
+    showInventoryModal(
+      context: context, 
+      onItemTap: (item, itemKey) {
+        print("Hello world!");
+        return purchaseItem(item as ShopItem, itemKey);
+      }
+    );
   }
 
   void _openShop() {
@@ -258,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage> {
               bottom: 24,
               left: 24,
               child: GestureDetector(
-                // onTap: _openShop,
+                onTap: _openInventory,
                 child: Container(
                     width: 56,
                     height: 56,
