@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import './inventory_item.dart';
+import '../shop/shop_item.dart';
 
 class InventoryService {
   // Singleton Alert!?
@@ -18,8 +20,15 @@ class InventoryService {
 
   /// Creates a new database at the specified path and returns a connection
   Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
+    String path;
+    
+    if (kIsWeb) {
+      // Web uses a virtual path/indexedDB
+      path = filePath; 
+    } else {
+      final dbPath = await getDatabasesPath();
+      path = join(dbPath, filePath);
+    }
 
     return await openDatabase(
       path,
