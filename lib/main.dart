@@ -104,30 +104,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> purchaseItem(ShopItem item, GlobalKey itemKey) async {
-    if (_coins >= item.price) {
+    if (_coins < item.price) {
+      showMessage(context, "Not enough coins available for purchase");
+      player.play(AssetSource('sounds/declined.mp3'));
+      return false;
+    }
+
+    try {
+      await InventoryService.instance.addItem(item);
+
       setState(() {
         _coins -= item.price;
-        print(
-            "Purchased ${item.name} for ${item.price} coins! Remaining balance: $_coins coins.");
       });
-      _currencyManager.setCoinBalance(_coins);
 
+      await _currencyManager.setCoinBalance(_coins);
       runAddToCartAnimation(itemKey);
+      player.play(AssetSource('sounds/purchase.wav'));
 
-      try {
-        player.play(AssetSource('sounds/purchase.wav'));
-      } catch (e) {
-        print("Error playing sound: $e");
-      }
+      print("Purchased ${item.name}! New balance: $_coins");
       return true;
-    } else {
-      String message = "Not enough coins available for purchase";
-      showMessage(context, message);
-      try {
-        player.play(AssetSource('sounds/declined.mp3'));
-      } catch (e) {
-        print("Error playing sound: $e");
-      }
+    } catch (e) {
+      print("Purchase Error: $e");
       return false;
     }
   }
