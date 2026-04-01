@@ -13,6 +13,7 @@ import 'package:walkyourcat/features/inventory/inventory_modal.dart';
 import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:walkyourcat/cat_stats_bar.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
@@ -245,6 +246,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
+            ),
+
+            //food bar
+            Positioned(
+              top: 60, // sits just below the steps + coins row
+              left: 16,
+              child: CatStatsBar(), // happinessPercent defaults to 1.0 until adi works on it
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
