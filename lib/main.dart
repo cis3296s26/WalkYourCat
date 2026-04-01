@@ -102,10 +102,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openInventory() {
     showInventoryModal(
       context: context, 
-      onItemTap: (item, itemKey) {
-        print("Hello world!");
-        return purchaseItem(item as ShopItem, itemKey);
-      }
     );
   }
 
