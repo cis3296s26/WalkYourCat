@@ -43,6 +43,35 @@ class ShopItem {
     );
   }
 
+  factory ShopItem.fromMap(Map<String, dynamic> map) {
+    return ShopItem(
+      id: map['id'],
+      image: map['image'],
+      tag: map['tag'],
+      name: map['name'],
+      price: map['price'],
+      description: map['description'],
+      stats: ItemStats(
+        hunger: map['hunger'] ?? 0,
+        health: map['health'] ?? 0,
+      ),
+    );
+  }
+
+  Map<String, dynamic> toMap(int quantity) {
+    return {
+      'id': id,
+      'image': image,
+      'tag': tag,
+      'name': name,
+      'price': price,
+      'description': description,
+      'hunger': stats.hunger,
+      'health': stats.health,
+      'quantity': quantity,
+    };
+  }
+
   // Future helper once our artist gets more done
   String get assetPath {
     String sanitizedName = name.toLowerCase().replaceAll(' ', '_');
