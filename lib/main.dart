@@ -1,15 +1,35 @@
+import 'dart:io';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
+import 'package:walkyourcat/features/inventory/inventory_modal.dart';
+import 'package:walkyourcat/features/inventory/inventory_service.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (kIsWeb) {
+    // Web implementation of sqlite
+    databaseFactory = databaseFactoryFfiWeb;
+  } else {
+    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+    } 
+    // Mobile "should" just work
+  }
+
   runApp(const MyApp());
 }
 
@@ -47,25 +67,25 @@ class _MyHomePageState extends State<MyHomePage> {
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _initializeCoins();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _initializeCoins();
+  }
 
-  // Future<void> _initializeCoins() async {
-  //   // Temporary test seed so the shop starts with 100 coins.
-  //   await _currencyManager.setCoinBalance(100);
-  //   await _loadCoins();
-  // }
+  Future<void> _initializeCoins() async {
+    // Temporary test seed so the shop starts with 100 coins.
+    await _currencyManager.setCoinBalance(300);
+    await _loadCoins();
+  }
 
-  // Future<void> _loadCoins() async {
-  //   final coins = await _currencyManager.getCoinBalance();
-  //   if (!mounted) return;
-  //   setState(() {
-  //     _coins = coins;
-  //   });
-  // }
+  Future<void> _loadCoins() async {
+    final coins = await _currencyManager.getCoinBalance();
+    if (!mounted) return;
+    setState(() {
+      _coins = coins;
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -77,6 +97,12 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _selectedItem = item;
     });
+  }
+
+  void _openInventory() {
+    showInventoryModal(
+      context: context, 
+    );
   }
 
   void _openShop() {
@@ -93,30 +119,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> purchaseItem(ShopItem item, GlobalKey itemKey) async {
-    if (_coins >= item.price) {
+    if (_coins < item.price) {
+      showMessage(context, "Not enough coins available for purchase");
+      player.play(AssetSource('sounds/declined.mp3'));
+      return false;
+    }
+
+    try {
+      await InventoryService.instance.addItem(item);
+
       setState(() {
         _coins -= item.price;
-        print(
-            "Purchased ${item.name} for ${item.price} coins! Remaining balance: $_coins coins.");
       });
-      _currencyManager.setCoinBalance(_coins);
 
+      await _currencyManager.setCoinBalance(_coins);
       runAddToCartAnimation(itemKey);
+      player.play(AssetSource('sounds/purchase.wav'));
 
-      try {
-        player.play(AssetSource('sounds/purchase.wav'));
-      } catch (e) {
-        print("Error playing sound: $e");
-      }
+      print("Purchased ${item.name}! New balance: $_coins");
       return true;
-    } else {
-      String message = "Not enough coins available for purchase";
-      showMessage(context, message);
-      try {
-        player.play(AssetSource('sounds/declined.mp3'));
-      } catch (e) {
-        print("Error playing sound: $e");
-      }
+    } catch (e) {
+      print("Purchase Error: $e");
       return false;
     }
   }
@@ -258,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
               bottom: 24,
               left: 24,
               child: GestureDetector(
-                // onTap: _openShop,
+                onTap: _openInventory,
                 child: Container(
                     width: 56,
                     height: 56,
