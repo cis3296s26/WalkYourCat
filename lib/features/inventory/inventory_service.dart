@@ -49,6 +49,7 @@ class InventoryService {
         description TEXT NOT NULL,
         hunger INTEGER NOT NULL,
         health INTEGER NOT NULL,
+        happiness INTEGER NOT NULL,
         quantity INTEGER NOT NULL
       )
     ''');
