@@ -390,18 +390,28 @@ class _ShopItemCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _StatChip(
-                          label: 'Hunger ${_signed(item.stats.hunger)}',
-                          background: Colors.white.withValues(alpha: 0.75),
-                          foreground: const Color(0xFF8D5A2B),
-                        ),
-                        _StatChip(
-                          label: 'Health ${_signed(item.stats.health)}',
-                          background: Colors.white.withValues(alpha: 0.75),
-                          foreground: item.stats.health >= 0
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFC62828),
-                        ),
+                        if (item.stats.hunger > 0)
+                          _StatChip(
+                            label: 'Food ${_signed(item.stats.hunger)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: const Color(0xFF8D5A2B),
+                          ),
+                        if (item.stats.health > 0)
+                          _StatChip(
+                            label: 'Health ${_signed(item.stats.health)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: item.stats.health >= 0
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFC62828),
+                          ),
+                        if (item.stats.happiness > 0)
+                          _StatChip(
+                            label: 'Happiness ${_signed(item.stats.happiness)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: item.stats.happiness >= 0
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFC62828),
+                          ),
                       ],
                     ),
                   ],
