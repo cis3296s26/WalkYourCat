@@ -6,16 +6,24 @@ import './inventory_service.dart';
 
 void showInventoryModal({
   required BuildContext context,
+  required Future<bool> Function(InventoryItem, GlobalKey) onItemTap,
 }) {
   showDialog<void>(
     context: context,
     barrierDismissible: true,
-    builder: (dialogContext) => const _InventoryModal(),
+    builder: (dialogContext) => _InventoryModal(
+      onItemTap: onItemTap,
+    ),
   );
 }
 
 class _InventoryModal extends StatelessWidget {
-  const _InventoryModal();
+  const _InventoryModal({
+    required this.onItemTap,
+  });
+
+  /* --- FOR TAPPING ITEMS IN INVENTORY --- */
+  final Future<bool> Function(InventoryItem, GlobalKey) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +51,7 @@ class _InventoryModal extends StatelessWidget {
               return const Text("You have no items, go visit the Meowket to buy some!");
             }
 
-            return _InventoryModalCard(items: items);
+            return _InventoryModalCard(items: items, onItemTap: onItemTap);
           },
         ),
       ),
@@ -53,8 +61,13 @@ class _InventoryModal extends StatelessWidget {
 
 /// This actually renders the list items
 class _InventoryModalCard extends StatelessWidget {
-  const _InventoryModalCard({required this.items});
+  _InventoryModalCard({
+    required this.items,
+    required this.onItemTap,
+  });
+
   final List<InventoryItem> items;
+  final Future<bool> Function(InventoryItem, GlobalKey) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +84,21 @@ class _InventoryModalCard extends StatelessWidget {
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final inv = items[index];
+                final itemKey = GlobalKey();
                 // SEE HERE FOR DATA FELLOW GROUP MEMBER 
                 return ListTile(
+                  key: itemKey,
                   dense: true,
                   title: Text(inv.item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text("ID: ${inv.item.id} | Tag: ${inv.item.tag}"),
                   trailing: Text("Qty: ${inv.quantity}", style: const TextStyle(color: Colors.blueGrey)),
                   leading: const Icon(FontAwesomeIcons.box, size: 16),
+                  onTap: () async {
+                    await onItemTap(inv, itemKey);
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
                 );
               },
             ),
