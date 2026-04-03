@@ -69,31 +69,10 @@ class _MyHomePageState extends State<MyHomePage> {
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
 
-  double _happiness = 100.0; 
-  Timer? _happinessTimer;
-
   @override
   void initState() {
     super.initState();
     _initializeCoins();
-
-    // timer to decrease happiness every hour by 10 points
-    _happinessTimer = Timer.periodic(
-      const Duration(hours: 1),
-      (_) => _decreaseHappiness()
-    );
-  }
-
-  @override
-  void dispose() {
-    _happinessTimer?.cancel();
-    super.dispose();
-  }
-
-  void _decreaseHappiness() {
-    setState(() {
-      _happiness = (_happiness - 10).clamp(0.0, 100.0);
-    });
   }
 
   Future<void> _initializeCoins() async {
@@ -110,9 +89,10 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _incrementCounter() {
+  Future<void> _incrementCounter() async {
     setState(() {
       _counter++;
+      CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
     });
   }
 
@@ -278,9 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Positioned(
               top: 60, // sits just below the steps + coins row
               left: 16,
-              child: CatStatsBar(
-                happinessPercent: _happiness / 100, // pass current happiness
-              ), 
+              child: CatStatsBar(),
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */

@@ -1,26 +1,13 @@
-// food bar + health bar (and eventually happiness) under the steps/coins widget
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CatStatsBar extends StatefulWidget {
-  final double happinessPercent;
+class CatStatsController extends ChangeNotifier {
+  static final CatStatsController instance = CatStatsController._init();
 
-  const CatStatsBar({
-    super.key,
-    required this.happinessPercent,
-  });
-
-  @override
-  State<CatStatsBar> createState() => _CatStatsBarState();
-}
-
-class _CatStatsBarState extends State<CatStatsBar> {
-  double _food = 100.0;
-  double _health = 100.0;
-  Timer? _decayTimer;
-  Timer? _healthDecayTimer;
+  double food = 100.0;
+  double health = 100.0;
+  double happinessPercent = 1.0;
 
   static const String _foodKey = 'cat_food_level';
   static const String _lastSavedKey = 'cat_food_last_saved';
@@ -28,143 +15,189 @@ class _CatStatsBarState extends State<CatStatsBar> {
   static const String _healthKey = 'cat_health_level';
   static const String _lastSavedHealthKey = 'cat_health_last_saved';
 
-  @override
-  void initState() {
-    super.initState();
-    _loadAndDecay();
-    _health_loadAndDecay();
-    _decayTimer =
-        Timer.periodic(const Duration(minutes: 1), (_) => _applyDecay());
-    _healthDecayTimer =
-        Timer.periodic(const Duration(minutes: 1), (_) => _health_applyDecay());
+  static const String _happinessKey = 'cat_happiness_level';
+  static const String _lastSavedHappinessKey = 'cat_happiness_last_saved';
+
+  CatStatsController._init() {
+    // Load the values
+    _foodLoadAndDecay();
+    _healthLoadAndDecay();
+    _happinessLoadAndDecay();
+    
+    // Decay timers
+    Timer.periodic(const Duration(minutes: 1), (_) => _applyFoodDecay());
+    Timer.periodic(const Duration(minutes: 1), (_) => _applyHealthDecay());
+    Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
   }
 
-  @override
-  void dispose() {
-    _decayTimer?.cancel();
-    _healthDecayTimer?.cancel();
-    super.dispose();
-  }
-
-  // loads saved food + catches up on any decay that happened while app was closed
-  Future<void> _loadAndDecay() async {
+  /* Decay Logic */
+  Future<void> _foodLoadAndDecay() async {
     final prefs = await SharedPreferences.getInstance();
 
     final savedFood = prefs.getDouble(_foodKey) ?? 100.0;
-    final lastSavedMs =
-        prefs.getInt(_lastSavedKey) ?? DateTime.now().millisecondsSinceEpoch;
+    final lastSavedMs = prefs.getInt(_lastSavedKey) ?? DateTime.now().millisecondsSinceEpoch;
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
 
-    // 10 pts/hr if cat is sad, 8 pts/hr otherwise
-    final decayRate = widget.happinessPercent < 0.5 ? 10.0 : 8.0;
-    final newFood = (savedFood - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
+    final decayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
+    food = (savedFood - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
 
-    if (!mounted) return;
-    setState(() => _food = newFood);
+    notifyListeners(); // Tells the UI to redraw
 
-    await prefs.setDouble(_foodKey, newFood);
+    await prefs.setDouble(_foodKey, food);
     await prefs.setInt(_lastSavedKey, now);
   }
 
-  // loads saved health + catches up on any decay that happened while app was closed
-  Future<void> _health_loadAndDecay() async {
+  Future<void> _healthLoadAndDecay() async {
     final prefs = await SharedPreferences.getInstance();
 
     final savedHealth = prefs.getDouble(_healthKey) ?? 100.0;
-    final lastSavedMs = prefs.getInt(_lastSavedHealthKey) ??
-        DateTime.now().millisecondsSinceEpoch;
+    final lastSavedMs = prefs.getInt(_lastSavedHealthKey) ?? DateTime.now().millisecondsSinceEpoch;
 
     final now = DateTime.now().millisecondsSinceEpoch;
     final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
 
-    // 20 pts/hr if food is low
-    final decayRate = _food < 30.0 ? 20.0 : 0.0;
-    final newHealth =
-        (savedHealth - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
+    final decayRate = food < 30.0 ? 20.0 : 0.0;
+    health = (savedHealth - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
 
-    if (!mounted) return;
-    setState(() => _health = newHealth);
+    notifyListeners();
 
-    await prefs.setDouble(_healthKey, newHealth);
+    await prefs.setDouble(_healthKey, health);
     await prefs.setInt(_lastSavedHealthKey, now);
   }
 
-  // called every minute while app is open — 8pts/hr =  about 0.133pts/min
-  Future<void> _applyDecay() async {
-    final decayRate = widget.happinessPercent < 0.5 ? 10.0 : 8.0;
-    final newFood = (_food - decayRate / 60.0).clamp(0.0, 100.0);
+  Future<void> _happinessLoadAndDecay() async {
+    final prefs = await SharedPreferences.getInstance();
 
-    if (!mounted) return;
-    setState(() => _food = newFood);
+    final savedHappiness = prefs.getDouble(_happinessKey) ?? 100.0;
+    final lastSavedMs = prefs.getInt(_lastSavedHappinessKey) ?? DateTime.now().millisecondsSinceEpoch;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
+
+    happinessPercent = (savedHappiness - (hoursElapsed / 10)).clamp(0.0, 1.0);
+
+    notifyListeners();
+
+    await prefs.setDouble(_happinessKey, happinessPercent);
+    await prefs.setInt(_lastSavedHappinessKey, now);
+  }
+
+  Future<void> _applyFoodDecay() async {
+    final decayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
+    food = (food - decayRate / 60.0).clamp(0.0, 100.0);
+
+    notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_foodKey, newFood);
+    await prefs.setDouble(_foodKey, food);
     await prefs.setInt(_lastSavedKey, DateTime.now().millisecondsSinceEpoch);
   }
 
-  // for health decay when food is low — 20pts/hr = about 0.333pts/min
-  Future<void> _health_applyDecay() async {
-    final decayRate = _food < 30.0 ? 20.0 : 0.0;
-    final newHealth = (_health - decayRate / 60.0).clamp(0.0, 100.0);
+  Future<void> _applyHealthDecay() async {
+    final decayRate = food < 30.0 ? 20.0 : 0.0;
+    health = (health - decayRate / 60.0).clamp(0.0, 100.0);
 
-    if (!mounted) return;
-    setState(() => _health = newHealth);
+    notifyListeners();
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_healthKey, newHealth);
-    await prefs.setInt(
-        _lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setDouble(_healthKey, health);
+    await prefs.setInt(_lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
   }
 
-  Color _barColor() {
-    if (_food > 60) return const Color(0xFF4CAF50);
-    if (_food > 30) return const Color(0xFFFF9800);
+  Future<void> _applyHappinessDecay() async {
+    happinessPercent = (happinessPercent - 0.01).clamp(0.0, 1.0);
+
+    notifyListeners();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_happinessKey, happinessPercent);
+    await prefs.setInt(_lastSavedHappinessKey, DateTime.now().millisecondsSinceEpoch);
+  }
+
+  /* Inventory Item Use */
+  Future<void> updateStats({int? foodAdded, int? healthAdded, int? happinessAdded}) async {
+    if (foodAdded != null) {
+      food = (food + foodAdded).clamp(0.0, 100.0); // Clamped so progress bar doesn't crash if > 100
+    }
+    if (healthAdded != null) {
+      health = (health + healthAdded).clamp(0.0, 100.0);
+    }
+    if (happinessAdded != null) { 
+      happinessPercent = (happinessPercent + (happinessAdded / 100)).clamp(0.0, 1.0);
+    }
+
+    debugPrint("Stats are now: Food: $food, Health: $health");
+    
+    notifyListeners(); // Force the UI to update
+
+    // Save the new stat boost immediately so closing the app doesn't lose it
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_foodKey, food);
+    await prefs.setDouble(_healthKey, health);
+  }
+}
+
+/* UI Widget */
+class CatStatsBar extends StatelessWidget {
+  const CatStatsBar({super.key});
+
+  // Legacy wrapper for old code
+  static Future<void> updateStats({int? food, int? health, int? happiness}) {
+    return CatStatsController.instance.updateStats(
+      foodAdded: food,
+      healthAdded: health,
+      happinessAdded: happiness,
+    );
+  }
+
+  Color _barColor(double value) {
+    if (value > 60) return const Color(0xFF4CAF50);
+    if (value > 30) return const Color(0xFFFF9800);
     return const Color(0xFFF44336);
   }
 
-  Color _healthBarColor() {
-    if (_health > 60) return const Color(0xFF4CAF50);
-    if (_health > 30) return const Color(0xFFFF9800);
-    return const Color(0xFFF44336);
-  }
-
-  Color _happinessBarColor(){
-    if (widget.happinessPercent > 0.6) return const Color(0xFF4CAF50);
-    if (widget.happinessPercent > 0.3) return const Color(0xFFFF9800);
-    return const Color(0xFFF44336);
-  }
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _StatBar(
-          icon: Icons.restaurant,
-          label: 'Food',
-          value: _food / 100.0,
-          color: _barColor(),
-        ),
-        _StatBar(
-          icon: Icons.health_and_safety,
-          label: 'Health',
-          value: _health / 100.0,
-          color: _healthBarColor(),
-        ),
-        _StatBar(
-          icon: Icons.sentiment_very_satisfied,
-          label: 'Happiness',
-          value: widget.happinessPercent.clamp(0.0, 1.0),
-          color: _happinessBarColor(),
-        ),
-      ],
+    // redraw whenever notifyListeners() is called inside the controller
+    return ListenableBuilder(
+      listenable: CatStatsController.instance,
+      builder: (context, child) {
+        final controller = CatStatsController.instance;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _StatBar(
+              icon: Icons.restaurant,
+              label: 'Food',
+              value: controller.food / 100.0,
+              color: _barColor(controller.food),
+            ),
+
+            _StatBar(
+              icon: Icons.health_and_safety,
+              label: 'Health',
+              value: controller.health / 100.0,
+              color: _barColor(controller.health),
+            ),
+            
+            _StatBar(
+              icon: Icons.sentiment_very_satisfied,
+              label: 'Happiness',
+              value: controller.happinessPercent,
+              color: _barColor(controller.happinessPercent * 100),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-// reusable bar widget — icon, label, value (0.0–1.0), color
+/* UI Component */
 class _StatBar extends StatelessWidget {
   final IconData icon;
   final String label;
