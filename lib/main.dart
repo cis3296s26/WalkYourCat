@@ -193,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(
-                        image: AssetImage('assets/cat.png'),
+                        image: AssetImage('assets/images/cat.png'),
                         width: MediaQuery.of(context).size.width * 0.75),
                   ),
                   const Text('You have pet the cat this many times:'),
@@ -302,7 +302,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: AddToCartIcon(
                       key: inventoryKey,
-                      icon: const Icon(Icons.inventory),
+                      icon: const Icon(Icons.inventory,
+                      color: Colors.white),
                       badgeOptions: const BadgeOptions(
                         active: false,
                       ),
