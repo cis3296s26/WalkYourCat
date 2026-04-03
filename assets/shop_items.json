@@ -62,8 +62,7 @@
             "name": "Wooden Yo-Yo",
             "price": 12,
             "stats": {
-                "hunger": -2,
-                "health": 2
+                "happiness": 15
             },
             "description": "Practicing tricks burns a bit of energy but lifts the spirits."
         },
@@ -73,8 +72,7 @@
             "name": "Bouncy Ball",
             "price": 8,
             "stats": {
-                "hunger": -5,
-                "health": 1
+                "happiness": 10
             },
             "description": "Chasing this around is great exercise."
         },
@@ -84,8 +82,7 @@
             "name": "Joke Book",
             "price": 15,
             "stats": {
-                "hunger": 0,
-                "health": 5
+                "happiness": 20
             },
             "description": "Laughter is the second best medicine."
         },
@@ -95,8 +92,7 @@
             "name": "Harmonica",
             "price": 25,
             "stats": {
-                "hunger": -3,
-                "health": 8
+                "happiness": 30
             },
             "description": "A bit of music makes the long nights more bearable."
         },
@@ -106,8 +102,7 @@
             "name": "Sparklers",
             "price": 18,
             "stats": {
-                "hunger": 0,
-                "health": 3
+                "happiness": 25
             },
             "description": "Bright, crackling, and momentarily mesmerizing."
         },
