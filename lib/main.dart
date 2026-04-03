@@ -67,6 +67,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late Future<void> Function(GlobalKey) runAddToCartAnimation;
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
+  String _currentCatImage = 'assets/animations/idle_cat.gif';
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
 
   @override
@@ -92,8 +93,17 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _incrementCounter() async {
     setState(() {
       _counter++;
+      _currentCatImage = 'assets/animations/petted_cat.gif';
       CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
     });
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      setState(() {
+        _currentCatImage = 'assets/animations/idle_cat.gif';
+      });
+    }
   }
 
   void _handleMenuSelection(SampleItem item) {
@@ -106,11 +116,43 @@ class _MyHomePageState extends State<MyHomePage> {
     showInventoryModal(
       context: context,
       onItemTap: (invItem, key) async {
+        // Apply item effects and remove from inventory
         await InventoryService.instance.useItem(invItem);
+        // Start animation
+        _playItemAnimation(invItem.item.tag);
+
         return true;
       },
     );
   }
+
+  void _playItemAnimation(String tag) async {
+    /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
+    // --------- FOOD --------
+    if (tag == 'food') {
+      setState(() {
+        _currentCatImage = 'assets/animations/eating_cat.gif';
+      });
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _currentCatImage = 'assets/animations/idle_cat.gif';
+        });
+      }
+    // --------- TOYS --------
+    } else if (tag == 'fun') {
+      setState(() {
+        _currentCatImage = 'assets/animations/happy_cat.gif';
+      });
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _currentCatImage = 'assets/animations/idle_cat.gif';
+        });
+      }
+    }
+  }
+
 
   void _openShop() {
     showShopModal(
@@ -196,13 +238,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(
-                        image: AssetImage('assets/images/cat.png'),
+                        image: AssetImage(_currentCatImage),
                         width: MediaQuery.of(context).size.width * 0.65),
-                  ),
-                  const Text('You have pet the cat this many times:'),
-                  Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ],
               ),
