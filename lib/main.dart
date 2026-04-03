@@ -194,8 +194,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(
-                        image: AssetImage('assets/cat.png'),
-                        width: MediaQuery.of(context).size.width * 0.75),
+                        image: AssetImage('assets/images/cat.png'),
+                        width: MediaQuery.of(context).size.width * 0.65),
                   ),
                   const Text('You have pet the cat this many times:'),
                   Text(
