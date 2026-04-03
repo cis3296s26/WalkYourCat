@@ -191,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: _incrementCounter,
                     child: Image(
                         image: AssetImage('assets/cat.png'),
-                        width: MediaQuery.of(context).size.width * 0.75),
+                        width: MediaQuery.of(context).size.width * 0.65),
                   ),
                   const Text('You have pet the cat this many times:'),
                   Text(
@@ -248,11 +248,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
 
-            //food bar
+            //stats bar
             Positioned(
               top: 60, // sits just below the steps + coins row
               left: 16,
-              child: CatStatsBar(), // happinessPercent defaults to 1.0 until adi works on it
+              child: CatStatsBar(), // happinessPercent defaults to 1.0 until kristy works on it
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
