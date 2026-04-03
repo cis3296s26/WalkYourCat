@@ -258,8 +258,9 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.36),
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(
