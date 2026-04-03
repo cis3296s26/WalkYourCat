@@ -91,6 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _incrementCounter() {
     setState(() {
       _counter++;
+      CatStatsBar.updateStats(food: -50, health: -50);  // TO TEST STAT CHANGES ON PET INTERACTION
     });
   }
 

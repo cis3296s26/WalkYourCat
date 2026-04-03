@@ -14,6 +14,14 @@ class CatStatsBar extends StatefulWidget {
     this.happinessPercent = 1.0,
   });
 
+  static Future<void> updateStats({int? food, int? health, int? happiness}) {
+    return _CatStatsBarState().updateStats(
+      food: food,
+      health: health,
+      happiness: happiness,
+    );
+  }
+
   @override
   State<CatStatsBar> createState() => _CatStatsBarState();
 }
@@ -48,6 +56,7 @@ class _CatStatsBarState extends State<CatStatsBar> {
     super.dispose();
   }
 
+  /* --------- DECAY LOGIC --------- */
   // loads saved food + catches up on any decay that happened while app was closed
   Future<void> _loadAndDecay() async {
     final prefs = await SharedPreferences.getInstance();
@@ -120,6 +129,7 @@ class _CatStatsBarState extends State<CatStatsBar> {
         _lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
   }
 
+  /* --------- COLORS --------- */
   Color _barColor() {
     if (_food > 60) return const Color(0xFF4CAF50);
     if (_food > 30) return const Color(0xFFFF9800);
@@ -130,6 +140,17 @@ class _CatStatsBarState extends State<CatStatsBar> {
     if (_health > 60) return const Color(0xFF4CAF50);
     if (_health > 30) return const Color(0xFFFF9800);
     return const Color(0xFFF44336);
+  }
+
+  /* --------- FOR INVENTORY ITEM USE --------- */
+  /// called when using an item from inventory
+  Future<void> updateStats({int? food, int? health, int? happiness}) async {
+    // if attr is not null,     add it,    else keep the same
+    _food = (food != null) ? (_food + food) : _food;
+    _health = (health != null) ? (_health + health) : _health;
+    // _happiness = (happiness != null) ? (_happiness + happiness) : _happiness;
+
+    debugPrint("Stats are now: Food: $_food, Health: $_health");
   }
 
   @override

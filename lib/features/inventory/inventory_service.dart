@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:walkyourcat/cat_stats_bar.dart';
 import './inventory_item.dart';
 import '../shop/shop_item.dart';
 
@@ -126,6 +127,13 @@ class InventoryService {
   Future<void> useItem(InventoryItem invItem) async {
     
     /* --- apply item effects to pet --- */
+    await CatStatsBar.updateStats(
+      food: invItem.item.stats.hunger,
+      health: invItem.item.stats.health,
+      happiness: invItem.item.stats.happiness
+    );
+    debugPrint("Used item: ${invItem.item.name} - Hunger: ${invItem.item.stats.hunger}, Health: ${invItem.item.stats.health}, Happiness: ${invItem.item.stats.happiness}");
+    
     switch (invItem.item.tag) {
       /* -- FOOD -- */
       case 'food':
