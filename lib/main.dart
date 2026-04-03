@@ -88,10 +88,10 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _incrementCounter() {
+  Future<void> _incrementCounter() async {
     setState(() {
       _counter++;
-      CatStatsBar.updateStats(food: -50, health: -50);  // TO TEST STAT CHANGES ON PET INTERACTION
+      CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
     });
   }
 
