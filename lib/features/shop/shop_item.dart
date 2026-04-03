@@ -1,13 +1,16 @@
 class ItemStats {
   final int hunger;
   final int health;
+  final int happiness;
 
-  ItemStats({required this.hunger, required this.health});
+  ItemStats({required this.hunger, required this.health, required this.happiness});
 
   factory ItemStats.fromJson(Map<String, dynamic> json) {
     return ItemStats(
       hunger: json['hunger'] ?? 0,
       health: json['health'] ?? 0,
+      happiness: json['happiness'] ?? 0,
+
     );
   }
 }
@@ -54,6 +57,7 @@ class ShopItem {
       stats: ItemStats(
         hunger: map['hunger'] ?? 0,
         health: map['health'] ?? 0,
+        happiness: map['happiness'] ?? 0,
       ),
     );
   }
@@ -68,6 +72,7 @@ class ShopItem {
       'description': description,
       'hunger': stats.hunger,
       'health': stats.health,
+      'happiness': stats.happiness,
       'quantity': quantity,
     };
   }

@@ -207,7 +207,8 @@ class _ShopModalCard extends StatelessWidget {
                 tabs: activeCategories
                     .map(
                       (category) => Tab(
-                        icon: Icon(category.icon, size: 18, color: Colors.grey.shade500),
+                        icon: Icon(category.icon,
+                            size: 18, color: Colors.grey.shade500),
                         text: category.label,
                       ),
                     )
@@ -259,7 +260,10 @@ class _ShopHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 14, 16),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color.fromARGB(255, 220, 20, 60), Color.fromARGB(255, 136, 8, 8)],
+          colors: [
+            Color.fromARGB(255, 220, 20, 60),
+            Color.fromARGB(255, 136, 8, 8)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -390,18 +394,24 @@ class _ShopItemCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _StatChip(
-                          label: 'Hunger ${_signed(item.stats.hunger)}',
-                          background: Colors.white.withValues(alpha: 0.75),
-                          foreground: const Color(0xFF8D5A2B),
-                        ),
-                        _StatChip(
-                          label: 'Health ${_signed(item.stats.health)}',
-                          background: Colors.white.withValues(alpha: 0.75),
-                          foreground: item.stats.health >= 0
-                              ? const Color(0xFF2E7D32)
-                              : const Color(0xFFC62828),
-                        ),
+                        if (item.stats.hunger > 0)
+                          _StatChip(
+                            label: 'Food ${_signed(item.stats.hunger)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: const Color(0xFF8D5A2B),
+                          ),
+                        if (item.stats.health > 0)
+                          _StatChip(
+                            label: 'Health ${_signed(item.stats.health)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: const Color(0xFF2E7D32)
+                          ),
+                        if (item.stats.happiness > 0)
+                          _StatChip(
+                            label: 'Happiness ${_signed(item.stats.happiness)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: const Color(0xFF7E57C2)
+                          ),
                       ],
                     ),
                   ],
@@ -409,15 +419,15 @@ class _ShopItemCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _StatChip(
-                          label: '${item.price}',
-                          background: Colors.white,
-                          foreground: accent,
-                          coin: const Icon(
-                            Icons.monetization_on_rounded,
-                            color: Colors.amberAccent,
-                            size: 14,
-                          ),
-                        ),
+                label: '${item.price}',
+                background: Colors.white,
+                foreground: accent,
+                coin: const Icon(
+                  Icons.monetization_on_rounded,
+                  color: Colors.amberAccent,
+                  size: 14,
+                ),
+              ),
             ],
           ),
         ),
@@ -487,29 +497,28 @@ class _StatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [ 
-        Text(
-        label,
-        style: TextStyle(
-          color: foreground,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(999),
         ),
-      ),
-      if (coin != null) ...[
-          const SizedBox(width: 4),
-          coin!,
-        ],
-      ],
-      )
-    );
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: foreground,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (coin != null) ...[
+              const SizedBox(width: 4),
+              coin!,
+            ],
+          ],
+        ));
   }
 }
 

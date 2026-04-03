@@ -298,7 +298,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: AddToCartIcon(
                       key: inventoryKey,
-                      icon: const Icon(Icons.inventory),
+                      icon: const Icon(Icons.inventory,
+                      color: Colors.white),
                       badgeOptions: const BadgeOptions(
                         active: false,
                       ),
