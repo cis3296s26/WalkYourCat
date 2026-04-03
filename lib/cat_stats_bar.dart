@@ -70,7 +70,28 @@ class _CatStatsBarState extends State<CatStatsBar> {
     await prefs.setInt(_lastSavedKey, now);
   }
 
+  // loads saved health + catches up on any decay that happened while app was closed
+  Future<void> _health_loadAndDecay() async {
+    final prefs = await SharedPreferences.getInstance();
 
+    final savedHealth = prefs.getDouble(_healthKey) ?? 100.0;
+    final lastSavedMs = prefs.getInt(_lastSavedHealthKey) ??
+        DateTime.now().millisecondsSinceEpoch;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
+
+    // 20 pts/hr if food is low
+    final decayRate = _food < 30.0 ? 20.0 : 0.0;
+    final newHealth =
+        (savedHealth - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
+
+    if (!mounted) return;
+    setState(() => _health = newHealth);
+
+    await prefs.setDouble(_healthKey, newHealth);
+    await prefs.setInt(_lastSavedHealthKey, now);
+  }
 
   // called every minute while app is open — 8pts/hr =  about 0.133pts/min
   Future<void> _applyDecay() async {
@@ -85,6 +106,19 @@ class _CatStatsBarState extends State<CatStatsBar> {
     await prefs.setInt(_lastSavedKey, DateTime.now().millisecondsSinceEpoch);
   }
 
+  // for health decay when food is low — 20pts/hr = about 0.333pts/min
+  Future<void> _health_applyDecay() async {
+    final decayRate = _food < 30.0 ? 20.0 : 0.0;
+    final newHealth = (_health - decayRate / 60.0).clamp(0.0, 100.0);
+
+    if (!mounted) return;
+    setState(() => _health = newHealth);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_healthKey, newHealth);
+    await prefs.setInt(
+        _lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+  }
 
   Color _barColor() {
     if (_food > 60) return const Color(0xFF4CAF50);
