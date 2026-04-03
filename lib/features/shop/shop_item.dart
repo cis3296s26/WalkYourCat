@@ -9,8 +9,7 @@ class ItemStats {
     return ItemStats(
       hunger: json['hunger'] ?? 0,
       health: json['health'] ?? 0,
-      happiness: json['happiness'] ?? 0,
-
+      happiness:json['happiness'] ?? 0,
     );
   }
 }

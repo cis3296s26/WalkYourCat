@@ -101,7 +101,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _openInventory() {
     showInventoryModal(
-      context: context, 
+      context: context,
+      onItemTap: (invItem, key) async {
+        await InventoryService.instance.useItem(invItem);
+        return true;
+      },
     );
   }
 

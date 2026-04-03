@@ -122,6 +122,40 @@ class InventoryService {
     )).toList();
   }
 
+  /// Applies the effects of an item to the pet and removes it from inventory
+  Future<void> useItem(InventoryItem invItem) async {
+    
+    /* --- apply item effects to pet --- */
+    switch (invItem.item.tag) {
+      /* -- FOOD -- */
+      case 'food':
+        debugPrint("Used food item: ${invItem.item.name}.");
+        break;
+      /* -- MEDICINE -- */
+      case 'medicine':
+        debugPrint("Used medicine item: ${invItem.item.name}.");
+        break;
+      /* -- TOYS -- */
+      case 'fun':
+        debugPrint("Used fun item: ${invItem.item.name}.");
+        break;
+      /* -- DRINKS -- */
+      case 'drinks':
+        debugPrint("Used drink item: ${invItem.item.name}.");
+        break;
+      /* -- COSMETICS -- */
+      case 'cosmetic':
+        debugPrint("Used cosmetic item: ${invItem.item.name}.");
+        break;
+      default:
+        debugPrint("There must've been something wrong with this item: ${invItem.item.name}"); 
+        break;
+    }
+
+    /* --- decrease and remove item from inventory --- */
+    await removeItem(invItem.item.id);
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

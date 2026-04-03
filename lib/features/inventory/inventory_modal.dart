@@ -6,16 +6,19 @@ import './inventory_service.dart';
 
 void showInventoryModal({
   required BuildContext context,
+  required Future<bool> Function(InventoryItem, GlobalKey) onItemTap,
 }) {
   showDialog<void>(
     context: context,
     barrierDismissible: true,
-    builder: (dialogContext) => const _InventoryModal(),
+    builder: (dialogContext) => _InventoryModal(onItemTap: onItemTap),
   );
 }
 
 class _InventoryModal extends StatelessWidget {
-  const _InventoryModal();
+  const _InventoryModal({required this.onItemTap});
+
+  final Future<bool> Function(InventoryItem, GlobalKey) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +45,7 @@ class _InventoryModal extends StatelessWidget {
               return const _InventoryEmptyCard();
             }
 
-            return _InventoryModalCard(items: items);
+            return _InventoryModalCard(items: items, onItemTap: onItemTap);
           },
         ),
       ),
@@ -63,7 +66,6 @@ class _InventoryLoadingCard extends StatelessWidget {
   }
 }
 
-// if your cat has, nothing this shows
 class _InventoryEmptyCard extends StatelessWidget {
   const _InventoryEmptyCard();
 
@@ -106,9 +108,6 @@ class _InventoryEmptyCard extends StatelessWidget {
   }
 }
 
-// every icon here is copied directly from _ShopItemCard._iconForTag(), so the inventory card will always show the SAME icon
-// the accent + background colors also match the shop's _categories list, so switching between shop and inventory feels the same
-
 class _TagStyle {
   final IconData icon;
   final Color accent;
@@ -117,55 +116,23 @@ class _TagStyle {
       {required this.icon, required this.accent, required this.soft});
 }
 
-// const map so flutter never rebuilds this unnecessarily
 const Map<String, _TagStyle> _tagStyles = {
-  // food — Icons.lunch_dining_rounded, matches _iconForTag in shop_modal.dart
-  'food': _TagStyle(
-    icon: Icons.lunch_dining_rounded,
-    accent: Color(0xFFFF7043),
-    soft: Color(0xFFFFF0EA),
-  ),
-  // drinks — Icons.local_drink_rounded, matches _iconForTag in shop_modal.dart
-  'drinks': _TagStyle(
-    icon: Icons.local_drink_rounded,
-    accent: Color(0xFF2196F3),
-    soft: Color(0xFFE3F2FD),
-  ),
-  // fun — Icons.sports_esports_rounded, matches _iconForTag in shop_modal.dart
-  'fun': _TagStyle(
-    icon: Icons.sports_esports_rounded,
-    accent: Color(0xFF7E57C2),
-    soft: Color(0xFFF1EBFF),
-  ),
-  // medicine — Icons.medication_rounded, matches _iconForTag in shop_modal.dart
-  'medicine': _TagStyle(
-    icon: Icons.medication_rounded,
-    accent: Color(0xFF26A69A),
-    soft: Color(0xFFE6F7F5),
-  ),
-  //  cosmetic — FontAwesomeIcons.glasses, matches _iconForTag in shop_modal.dart
-  'cosmetic': _TagStyle(
-    icon: FontAwesomeIcons.glasses,
-    accent: Color(0xFFE91E8C),
-    soft: Color(0xFFFDE8F3),
-  ),
+  'food': _TagStyle(icon: Icons.lunch_dining_rounded, accent: Color(0xFFFF7043), soft: Color(0xFFFFF0EA)),
+  'drinks': _TagStyle(icon: Icons.local_drink_rounded, accent: Color(0xFF2196F3), soft: Color(0xFFE3F2FD)),
+  'fun': _TagStyle(icon: Icons.sports_esports_rounded, accent: Color(0xFF7E57C2), soft: Color(0xFFF1EBFF)),
+  'medicine': _TagStyle(icon: Icons.medication_rounded, accent: Color(0xFF26A69A), soft: Color(0xFFE6F7F5)),
+  'cosmetic': _TagStyle(icon: FontAwesomeIcons.glasses, accent: Color(0xFFE91E8C), soft: Color(0xFFFDE8F3)),
 };
 
-// fallback for any unknown tags — grey + generic box icon, won't crash
 _TagStyle _styleFor(String tag) =>
     _tagStyles[tag] ??
-    const _TagStyle(
-      icon: Icons.inventory_2_rounded,
-      accent: Color(0xFF78909C),
-      soft: Color(0xFFECEFF1),
-    );
-
-// we sort everything by quantity high → low so your most stocked items
-// show up first — feels more useful than random order
+    const _TagStyle(icon: Icons.inventory_2_rounded, accent: Color(0xFF78909C), soft: Color(0xFFECEFF1));
 
 class _InventoryModalCard extends StatelessWidget {
-  const _InventoryModalCard({required this.items});
+  const _InventoryModalCard({required this.items, required this.onItemTap});
+
   final List<InventoryItem> items;
+  final Future<bool> Function(InventoryItem, GlobalKey) onItemTap;
 
   @override
   Widget build(BuildContext context) {
@@ -199,8 +166,18 @@ class _InventoryModalCard extends StatelessWidget {
                         childAspectRatio: 0.8,
                       ),
                       itemCount: groupedItems[i].$2.length,
-                      itemBuilder: (context, index) =>
-                          _InventoryCard(inv: groupedItems[i].$2[index]),
+                      itemBuilder: (context, index) {
+                        final inv = groupedItems[i].$2[index];
+                        final itemKey = GlobalKey();
+                        return _InventoryCard(
+                          key: itemKey,
+                          inv: inv,
+                          onTap: () async {
+                            final used = await onItemTap(inv, itemKey);
+                            if (used && context.mounted) Navigator.of(context).pop();
+                          },
+                        );
+                      },
                     ),
                   ],
                 ],
@@ -213,8 +190,7 @@ class _InventoryModalCard extends StatelessWidget {
   }
 }
 
-List<(String, List<InventoryItem>)> _groupItemsByCategory(
-    List<InventoryItem> items) {
+List<(String, List<InventoryItem>)> _groupItemsByCategory(List<InventoryItem> items) {
   const categoryOrder = ['food', 'drinks', 'fun', 'medicine', 'cosmetic'];
   final grouped = <String, List<InventoryItem>>{};
 
@@ -228,8 +204,7 @@ List<(String, List<InventoryItem>)> _groupItemsByCategory(
 
   final orderedTags = [
     ...categoryOrder.where(grouped.containsKey),
-    ...grouped.keys.where((tag) => !categoryOrder.contains(tag)).toList()
-      ..sort(),
+    ...grouped.keys.where((tag) => !categoryOrder.contains(tag)).toList()..sort(),
   ];
 
   return orderedTags.map((tag) => (tag, grouped[tag]!)).toList();
@@ -283,141 +258,149 @@ class _CategoryDivider extends StatelessWidget {
   }
 }
 
-// two-part layout like the shop:
 class _InventoryCard extends StatelessWidget {
-  const _InventoryCard({required this.inv});
+  const _InventoryCard({super.key, required this.inv, required this.onTap});
   final InventoryItem inv;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final ts = _styleFor(inv.item.tag);
 
-    // resolve the color set based on warm vs cool style
     final Color iconBg = ts.soft;
     final Color iconColor = ts.accent;
     final Color textColor = const Color(0xFF3E2723);
     final Color qtyBg = ts.accent.withValues(alpha: 0.12);
     final Color qtyColor = ts.accent;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        // soft shadow so the cards feel lifted off the background, not flat
-        boxShadow: [
-          BoxShadow(
-            color: ts.accent.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // takes up the majority of the card, image or icon centered inside and if the item has an image path (like assets/images/apple.png) we show
-          // if the image fails to load or there's no path, falls back to the icon
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(18)),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: ts.accent.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-              child: Center(
-                child: (inv.item.image != null && inv.item.image!.isNotEmpty)
-                    ? Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Image.asset(
-                          inv.item.image!,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) =>
-                              Icon(ts.icon, size: 30, color: iconColor),
-                        ),
-                      )
-                    : Icon(ts.icon, size: 30, color: iconColor),
-              ),
-            ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  ),
+                  child: Center(
+                    child: (inv.item.image != null && inv.item.image!.isNotEmpty)
+                        ? Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Image.asset(
+                              inv.item.image!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(ts.icon, size: 30, color: iconColor),
+                            ),
+                          )
+                        : Icon(ts.icon, size: 30, color: iconColor),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        inv.item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: textColor,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            inv.item.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: qtyBg,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'x${inv.quantity}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: qtyColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: qtyBg,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        'x${inv.quantity}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: qtyColor,
-                        ),
-                      ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        if (inv.item.stats.hunger != 0)
+                          _StatChip(
+                            label: 'Hunger ${_signed(inv.item.stats.hunger)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: inv.item.stats.hunger >= 0
+                                ? const Color(0xFF8D5A2B)
+                                : const Color(0xFFC62828),
+                          ),
+                        if (inv.item.stats.health != 0)
+                          _StatChip(
+                            label: 'Health ${_signed(inv.item.stats.health)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: inv.item.stats.health >= 0
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFC62828),
+                          ),
+                        if (inv.item.stats.happiness != 0)
+                          _StatChip(
+                            label:
+                                'Happiness ${_signed(inv.item.stats.happiness)}',
+                            background: Colors.white.withValues(alpha: 0.75),
+                            foreground: inv.item.stats.happiness >= 0
+                                ? const Color(0xFF7E57C2)
+                                : const Color(0xFFC62828),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    if (inv.item.stats.hunger > 0)
-                      _StatChip(
-                        label: 'Food ${_signed(inv.item.stats.hunger)}',
-                        background: Colors.white.withValues(alpha: 0.75),
-                        foreground: const Color(0xFF8D5A2B),
-                      ),
-                    if (inv.item.stats.health > 0)
-                      _StatChip(
-                        label: 'Health ${_signed(inv.item.stats.health)}',
-                        background: Colors.white.withValues(alpha: 0.75),
-                        foreground: const Color(0xFF2E7D32)
-                      ),
-                    if (inv.item.stats.happiness > 0)
-                      _StatChip(
-                        label: 'Happiness ${_signed(inv.item.stats.happiness)}',
-                        background: Colors.white.withValues(alpha: 0.75),
-                        foreground:const Color(0xFF7E57C2)
-                      ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
-    static String _signed(int value) {
+
+  static String _signed(int value) {
     if (value > 0) return '+$value';
     return '$value';
   }
 }
 
-//inventory header
 class _InventoryHeader extends StatelessWidget {
   const _InventoryHeader();
 
@@ -441,19 +424,9 @@ class _InventoryHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Pawket',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+                Text('Pawket', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
                 SizedBox(height: 2),
-                Text(
-                  "your cat's belongings 🐾",
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
-                ),
+                Text("your cat's belongings 🐾", style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
