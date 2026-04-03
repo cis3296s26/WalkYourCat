@@ -1,0 +1,55 @@
+name: Deploy Flutter Web
+
+on:
+  push:
+    branches: ["feat/auto-deploy"] # The branch that will actually have the commits
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent multiple deployments from running at the same time
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Setup SQFlite Web
+        # Generates the sqlite3.wasm and service worker files needed for local DB
+        run: dart run sqflite_common_ffi_web:setup
+
+      - name: Build Web
+        run: flutter build web --release --base-href "/WalkYourCat/"
+
+      - name: Upload Artifac
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
