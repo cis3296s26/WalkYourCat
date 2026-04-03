@@ -13,6 +13,7 @@ import 'package:walkyourcat/features/inventory/inventory_modal.dart';
 import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+import 'package:walkyourcat/cat_stats_bar.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
@@ -194,7 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: _incrementCounter,
                     child: Image(
                         image: AssetImage('assets/images/cat.png'),
-                        width: MediaQuery.of(context).size.width * 0.75),
+                        width: MediaQuery.of(context).size.width * 0.65),
                   ),
                   const Text('You have pet the cat this many times:'),
                   Text(
@@ -249,6 +250,13 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
+            ),
+
+            //stats bar
+            Positioned(
+              top: 60, // sits just below the steps + coins row
+              left: 16,
+              child: CatStatsBar(), // happinessPercent defaults to 1.0 until kristy works on it
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
