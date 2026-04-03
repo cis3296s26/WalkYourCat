@@ -153,6 +153,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  String _getBackgroundImageForCurrentTime() {
+    // get current hour
+    final int hour = DateTime.now().hour;
+
+    // set background based on time of day
+    if (hour >= 20 || hour < 5) {
+      // 8pm - 4:59am
+      return 'assets/images/bg_evening.png';
+    } else if (hour >= 5 && hour < 7) {
+      // 5am - 6:59am
+      return 'assets/images/bg_sunset.png';
+    } else if (hour >= 7 && hour < 17) {
+      // 7am - 4:59pm
+      return 'assets/images/bg_morning.png';
+    } else {
+      // 5pm - 7:59pm
+      return 'assets/images/bg_morning.png';
+    }
+  }
 
   void _openShop() {
     showShopModal(
@@ -231,6 +250,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body: Stack(
           children: [
+            Positioned.fill(
+              child: Image.asset(
+                _getBackgroundImageForCurrentTime(),
+                fit: BoxFit.cover,
+              ),
+            ),
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
