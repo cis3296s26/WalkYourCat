@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -68,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
+
   @override
   void initState() {
     super.initState();
@@ -257,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
             Positioned(
               top: 60, // sits just below the steps + coins row
               left: 16,
-              child: CatStatsBar(), // happinessPercent defaults to 1.0 until kristy works on it
+              child: CatStatsBar(),
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
