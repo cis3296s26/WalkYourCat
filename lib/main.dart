@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -68,10 +68,32 @@ class _MyHomePageState extends State<MyHomePage> {
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
+
+  double _happiness = 100.0; 
+  Timer? _happinessTimer;
+
   @override
   void initState() {
     super.initState();
     _initializeCoins();
+
+    // timer to decrease happiness every hour by 10 points
+    _happinessTimer = Timer.periodic(
+      const Duration(hours: 1),
+      (_) => _decreaseHappiness()
+    );
+  }
+
+  @override
+  void dispose() {
+    _happinessTimer?.cancel();
+    super.dispose();
+  }
+
+  void _decreaseHappiness() {
+    setState(() {
+      _happiness = (_happiness - 10).clamp(0.0, 100.0);
+    });
   }
 
   Future<void> _initializeCoins() async {
@@ -256,7 +278,9 @@ class _MyHomePageState extends State<MyHomePage> {
             Positioned(
               top: 60, // sits just below the steps + coins row
               left: 16,
-              child: CatStatsBar(), // happinessPercent defaults to 1.0 until kristy works on it
+              child: CatStatsBar(
+                happinessPercent: _happiness / 100, // pass current happiness
+              ), 
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */

@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CatStatsBar extends StatefulWidget {
-  // pass happinessPercent in from main.dart (@kristy work on it)
-  // e.g. CatStatsBar(happinessPercent: _happiness / 100) -- it already affects the food decay rate so no other changes needed
   final double happinessPercent;
 
   const CatStatsBar({
     super.key,
-    this.happinessPercent = 1.0,
+    required this.happinessPercent,
   });
 
   @override
@@ -132,6 +130,11 @@ class _CatStatsBarState extends State<CatStatsBar> {
     return const Color(0xFFF44336);
   }
 
+  Color _happinessBarColor(){
+    if (widget.happinessPercent > 0.6) return const Color(0xFF4CAF50);
+    if (widget.happinessPercent > 0.3) return const Color(0xFFFF9800);
+    return const Color(0xFFF44336);
+  }
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -150,15 +153,12 @@ class _CatStatsBarState extends State<CatStatsBar> {
           value: _health / 100.0,
           color: _healthBarColor(),
         ),
-
-        // happiness bar goes here — just uncomment and pass in your value (you can change the icon/color/label as you like, I just picked something quick for testing)
-        // const SizedBox(height: 6),
-        // _StatBar(
-        //   icon: Icons.sentiment_very_satisfied,
-        //   label: 'Happiness',
-        //   value: widget.happinessPercent,
-        //   color: Color(0xFFE91E8C),
-        // ),
+        _StatBar(
+          icon: Icons.sentiment_very_satisfied,
+          label: 'Happiness',
+          value: widget.happinessPercent.clamp(0.0, 1.0),
+          color: _happinessBarColor(),
+        ),
       ],
     );
   }
