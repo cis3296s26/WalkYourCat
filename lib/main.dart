@@ -14,6 +14,7 @@ import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
+import 'package:walkyourcat/features/challenges/challenges_modal.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree }
 
@@ -124,6 +125,10 @@ class _MyHomePageState extends State<MyHomePage> {
         return true;
       },
     );
+  }
+
+  void _openChallenges() {
+    showChallengesModal(context);
   }
 
   void _playItemAnimation(String tag) async {
@@ -296,6 +301,35 @@ class _MyHomePageState extends State<MyHomePage> {
               top: 60, // sits just below the steps + coins row
               left: 16,
               child: CatStatsBar(),
+            ),
+
+            /* ------- FLOATING CHALLENGE BUTTON (bottom-right) --- */
+            Positioned(
+              bottom: 24,
+              right: 90,
+              child: GestureDetector(
+                onTap: _openChallenges,
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.deepPurple,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
