@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
 import 'package:walkyourcat/navbar.dart';
@@ -96,6 +97,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
       _currentCatImage = 'assets/animations/petted_cat.gif';
       CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
+      ChallengesService.instance.addProgress('petting', 1);
     });
 
     await Future.delayed(const Duration(seconds: 2));
