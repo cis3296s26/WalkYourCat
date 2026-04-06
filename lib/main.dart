@@ -68,12 +68,25 @@ class _MyHomePageState extends State<MyHomePage> {
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   String _currentCatImage = 'assets/animations/idle_cat.gif';
+  late Timer _backgroundUpdateTimer;
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
 
   @override
   void initState() {
     super.initState();
     _initializeCoins();
+    // Update background every minute to check if hour changed
+    _backgroundUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _backgroundUpdateTimer.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeCoins() async {
