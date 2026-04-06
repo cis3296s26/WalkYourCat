@@ -233,34 +233,6 @@ class _MyHomePageState extends State<MyHomePage> {
         this.runAddToCartAnimation = runAddToCartAnimation;
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: PopupMenuButton<SampleItem>(
-                initialValue: _selectedItem,
-                onSelected: _handleMenuSelection,
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SampleItem>>[
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionOne,
-                    child: Text('Settings'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionTwo,
-                    child: Text('Profile/Account'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionThree,
-                    child: Text('Social'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
         body: Stack(
           children: [
             Positioned.fill(
@@ -273,7 +245,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.36),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.5),
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(
@@ -286,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
             /* ------- STEP & COIN COUNTER WIDGETS --- */
             Positioned(
-              top: 16,
+              top: 36,
               left: 16,
               child: Row(
                 children: [
@@ -332,7 +304,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
             //stats bar
             Positioned(
-              top: 60, // sits just below the steps + coins row
+              top: 80, // sits just below the steps + coins row
               left: 16,
               child: CatStatsBar(),
             ),
@@ -398,7 +370,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        bottomNavigationBar: const CustomBottomNav(),
       ),
     );
   }

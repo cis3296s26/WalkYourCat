@@ -214,7 +214,7 @@ class _StatBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: const Color.fromARGB(0, 0, 0, 0),
         borderRadius: BorderRadius.circular(12),
