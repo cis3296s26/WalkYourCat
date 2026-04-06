@@ -25,9 +25,11 @@ class CatStatsController extends ChangeNotifier {
     _happinessLoadAndDecay();
     
     // Decay timers
-    Timer.periodic(const Duration(minutes: 1), (_) => _applyFoodDecay());
-    Timer.periodic(const Duration(minutes: 1), (_) => _applyHealthDecay());
-    Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
+    // Timer.periodic(const Duration(minutes: 1), (_) => _applyFoodDecay());
+    // Timer.periodic(const Duration(minutes: 1), (_) => _applyHealthDecay());
+    // Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
+
+    Timer.periodic(const Duration(seconds: 1), (_) => _applyDecay());
   }
 
   /* Decay Logic */
@@ -82,6 +84,12 @@ class CatStatsController extends ChangeNotifier {
 
     await prefs.setDouble(_happinessKey, happinessPercent);
     await prefs.setInt(_lastSavedHappinessKey, now);
+  }
+
+  Future<void> _applyDecay() async {
+    await _applyFoodDecay();
+    await _applyHealthDecay();
+    await _applyHappinessDecay();
   }
 
   Future<void> _applyFoodDecay() async {

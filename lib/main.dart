@@ -16,8 +16,9 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
 import 'package:walkyourcat/features/challenges/challenges_modal.dart';
+import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
 
-enum SampleItem { optionOne, optionTwo, optionThree }
+enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +30,7 @@ void main() {
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-    } 
+    }
     // Mobile "should" just work
   }
 
@@ -109,12 +110,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _handleMenuSelection(SampleItem item) {
-    setState(() {
-      _selectedItem = item;
-    });
-  }
-
   void _openInventory() {
     showInventoryModal(
       context: context,
@@ -133,6 +128,10 @@ class _MyHomePageState extends State<MyHomePage> {
     showChallengesModal(context);
   }
 
+  void _openChallengesHistory() {
+    showChallengesHistoryModal(context);
+  }
+
   void _playItemAnimation(String tag) async {
     /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
     // --------- FOOD --------
@@ -146,7 +145,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _currentCatImage = 'assets/animations/idle_cat.gif';
         });
       }
-    // --------- TOYS --------
+      // --------- TOYS --------
     } else if (tag == 'fun') {
       setState(() {
         _currentCatImage = 'assets/animations/happy_cat.gif';
@@ -216,7 +215,6 @@ class _MyHomePageState extends State<MyHomePage> {
               padding: const EdgeInsets.only(right: 16.0),
               child: PopupMenuButton<SampleItem>(
                 initialValue: _selectedItem,
-                onSelected: _handleMenuSelection,
                 itemBuilder: (BuildContext context) =>
                     <PopupMenuEntry<SampleItem>>[
                   const PopupMenuItem<SampleItem>(
@@ -230,6 +228,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   const PopupMenuItem<SampleItem>(
                     value: SampleItem.optionThree,
                     child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openChallengesHistory,
+                    child: Text('Challenges History'),
                   ),
                 ],
               ),
@@ -385,8 +388,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: AddToCartIcon(
                       key: inventoryKey,
-                      icon: const Icon(Icons.inventory,
-                      color: Colors.white),
+                      icon: const Icon(Icons.inventory, color: Colors.white),
                       badgeOptions: const BadgeOptions(
                         active: false,
                       ),
