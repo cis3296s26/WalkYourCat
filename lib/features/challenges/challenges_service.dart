@@ -86,8 +86,8 @@ class ChallengesService {
       String? metaTarget = template['metaTarget'];
 
       if (id == 'chal_001') { // Walking
-        targetValue = 5000 + random.nextInt(10000); // 5000 - 14999
-        rewardCoins = (targetValue / 100).round();
+        targetValue = 10000; // 10ksteps
+        rewardCoins = 1000;
         description = "Walk ${targetValue} steps to keep your cat company.";
       } 
       else if (id == 'chal_002') { // Feeding
