@@ -1,5 +1,6 @@
 // IMPORT STATEMENTS
 import 'package:shared_preferences/shared_preferences.dart'; // for storing coin balance persistently
+import 'package:walkyourcat/features/challenges/challenges_service.dart';
 
 class StepCurrencyManager {
   /* ----- VARIABLE DECLARATIONS ----- */
@@ -44,6 +45,7 @@ class StepCurrencyManager {
       startOfDaySteps = steps; // Set new baseline
       lastDate = currentDay;   // Update the day
       unprocessedSteps = 0; 
+      await ChallengesService.instance.clearChallenges(); // Reset daily challenges
     }
     /* --- END OF DAILY STEP RESET --- */
 
@@ -78,6 +80,9 @@ class StepCurrencyManager {
     // calculate daily steps for display
     int dailySteps = steps - startOfDaySteps;
     if (dailySteps < 0) dailySteps = steps;
+
+    // Update challenge progress with the new steps taken
+    await ChallengesService.instance.addProgress('walking', 1);
 
     return dailySteps;
   }
