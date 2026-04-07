@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
-import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
@@ -16,8 +15,9 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
 import 'package:walkyourcat/features/challenges/challenges_modal.dart';
+import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
 
-enum SampleItem { optionOne, optionTwo, optionThree }
+enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,7 +29,7 @@ void main() {
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-    } 
+    }
     // Mobile "should" just work
   }
 
@@ -45,17 +45,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WalkYourCat',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'WalkYourCat Scrum 3 Demo'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -109,12 +108,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  void _handleMenuSelection(SampleItem item) {
-    setState(() {
-      _selectedItem = item;
-    });
-  }
-
   void _openInventory() {
     showInventoryModal(
       context: context,
@@ -133,6 +126,10 @@ class _MyHomePageState extends State<MyHomePage> {
     showChallengesModal(context);
   }
 
+  void _openChallengesHistory() {
+    showChallengesHistoryModal(context);
+  }
+
   void _playItemAnimation(String tag) async {
     /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
     // --------- FOOD --------
@@ -146,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _currentCatImage = 'assets/animations/idle_cat.gif';
         });
       }
-    // --------- TOYS --------
+      // --------- TOYS --------
     } else if (tag == 'fun') {
       setState(() {
         _currentCatImage = 'assets/animations/happy_cat.gif';
@@ -208,34 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
         this.runAddToCartAnimation = runAddToCartAnimation;
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: PopupMenuButton<SampleItem>(
-                initialValue: _selectedItem,
-                onSelected: _handleMenuSelection,
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SampleItem>>[
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionOne,
-                    child: Text('Settings'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionTwo,
-                    child: Text('Profile/Account'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionThree,
-                    child: Text('Social'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
         body: Stack(
           children: [
             Center(
@@ -254,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
             /* ------- STEP & COIN COUNTER WIDGETS --- */
             Positioned(
-              top: 16,
+              top: 36,
               left: 16,
               child: Row(
                 children: [
@@ -300,15 +269,44 @@ class _MyHomePageState extends State<MyHomePage> {
 
             //stats bar
             Positioned(
-              top: 60, // sits just below the steps + coins row
+              top: 80, // sits just below the steps + coins row
               left: 16,
               child: CatStatsBar(),
+            ),
+
+            Positioned(
+              top: 36,
+              right: 16,
+              child: PopupMenuButton<SampleItem>(
+                initialValue: _selectedItem,
+                icon: const Icon(Icons.more_vert),
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<SampleItem>>[
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionOne,
+                    child: Text('Settings'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionTwo,
+                    child: Text('Profile/Account'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionThree,
+                    child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openChallengesHistory,
+                    child: const Text('Challenges History'),
+                  ),
+                ],
+              ),
             ),
 
             /* ------- FLOATING CHALLENGE BUTTON (bottom-right) --- */
             Positioned(
               bottom: 24,
-              right: 90,
+              left: 90,
               child: GestureDetector(
                 onTap: _openChallenges,
                 child: Container(
@@ -385,8 +383,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: AddToCartIcon(
                       key: inventoryKey,
-                      icon: const Icon(Icons.inventory,
-                      color: Colors.white),
+                      icon: const Icon(Icons.inventory, color: Colors.white),
                       badgeOptions: const BadgeOptions(
                         active: false,
                       ),
@@ -395,7 +392,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        bottomNavigationBar: const CustomBottomNav(),
       ),
     );
   }
