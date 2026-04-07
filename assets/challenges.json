@@ -1,0 +1,31 @@
+{
+  "challenges": [
+    {
+      "id": "chal_001",
+      "title": "A Long Walk",
+      "description": "Walk 10,000 steps to keep your cat company.",
+      "type": "walking",
+      "targetValue": 10000,
+      "rewardCoins": 100,
+      "metaTarget": null
+    },
+    {
+      "id": "chal_002",
+      "title": "Healthy Diet",
+      "description": "Feed your cat {food} {times} times.",
+      "type": "feeding",
+      "targetValue": -1,
+      "rewardCoins": -1,
+      "metaTarget": "{food}"
+    },
+    {
+      "id": "chal_003",
+      "title": "PET ME NOW!",
+      "description": "Pet your cat {times} times.",
+      "type": "petting",
+      "targetValue": -1,
+      "rewardCoins": -1,
+      "metaTarget": "{times}"
+    }
+  ]
+}

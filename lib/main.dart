@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
-import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
@@ -14,8 +14,10 @@ import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
+import 'package:walkyourcat/features/challenges/challenges_modal.dart';
+import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
 
-enum SampleItem { optionOne, optionTwo, optionThree }
+enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,7 +29,7 @@ void main() {
     if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
-    } 
+    }
     // Mobile "should" just work
   }
 
@@ -43,17 +45,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WalkYourCat',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'WalkYourCat Scrum 2 Demo'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -108,6 +109,7 @@ class _MyHomePageState extends State<MyHomePage> {
       _counter++;
       _currentCatImage = 'assets/animations/petted_cat.gif';
       CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
+      ChallengesService.instance.addProgress('petting', 1);
     });
 
     await Future.delayed(const Duration(seconds: 2));
@@ -117,12 +119,6 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentCatImage = 'assets/animations/idle_cat.gif';
       });
     }
-  }
-
-  void _handleMenuSelection(SampleItem item) {
-    setState(() {
-      _selectedItem = item;
-    });
   }
 
   void _openInventory() {
@@ -139,6 +135,14 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _openChallenges() {
+    showChallengesModal(context);
+  }
+
+  void _openChallengesHistory() {
+    showChallengesHistoryModal(context);
+  }
+
   void _playItemAnimation(String tag) async {
     /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
     // --------- FOOD --------
@@ -152,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
           _currentCatImage = 'assets/animations/idle_cat.gif';
         });
       }
-    // --------- TOYS --------
+      // --------- TOYS --------
     } else if (tag == 'fun') {
       setState(() {
         _currentCatImage = 'assets/animations/happy_cat.gif';
@@ -309,6 +313,64 @@ class _MyHomePageState extends State<MyHomePage> {
               child: CatStatsBar(),
             ),
 
+            Positioned(
+              top: 36,
+              right: 16,
+              child: PopupMenuButton<SampleItem>(
+                initialValue: _selectedItem,
+                icon: const Icon(Icons.more_vert),
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<SampleItem>>[
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionOne,
+                    child: Text('Settings'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionTwo,
+                    child: Text('Profile/Account'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionThree,
+                    child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openChallengesHistory,
+                    child: const Text('Challenges History'),
+                  ),
+                ],
+              ),
+            ),
+
+            /* ------- FLOATING CHALLENGE BUTTON (bottom-right) --- */
+            Positioned(
+              bottom: 24,
+              left: 90,
+              child: GestureDetector(
+                onTap: _openChallenges,
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.deepPurple,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+              ),
+            ),
+
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
             Positioned(
               bottom: 24,
@@ -360,8 +422,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     child: AddToCartIcon(
                       key: inventoryKey,
-                      icon: const Icon(Icons.inventory,
-                      color: Colors.white),
+                      icon: const Icon(Icons.inventory, color: Colors.white),
                       badgeOptions: const BadgeOptions(
                         active: false,
                       ),
