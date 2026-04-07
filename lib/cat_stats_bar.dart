@@ -29,7 +29,7 @@ class CatStatsController extends ChangeNotifier {
     // Timer.periodic(const Duration(minutes: 1), (_) => _applyHealthDecay());
     // Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
 
-    Timer.periodic(const Duration(seconds: 1), (_) => _applyDecay());
+    Timer.periodic(const Duration(minutes: 1), (_) => _applyDecay());
   }
 
   /* Decay Logic */
