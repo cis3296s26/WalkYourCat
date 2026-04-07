@@ -69,12 +69,25 @@ class _MyHomePageState extends State<MyHomePage> {
   int _coins = 0;
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   String _currentCatImage = 'assets/animations/idle_cat.gif';
+  late Timer _backgroundUpdateTimer;
   /*Uncomment 3 methods below to test with a starting balance of 100 coins */
 
   @override
   void initState() {
     super.initState();
     _initializeCoins();
+    // Update background every minute to check if hour changed
+    _backgroundUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _backgroundUpdateTimer.cancel();
+    super.dispose();
   }
 
   Future<void> _initializeCoins() async {
@@ -157,6 +170,25 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  String _getBackgroundImageForCurrentTime() {
+    // get current hour
+    final int hour = DateTime.now().hour;
+
+    // set background based on time of day
+    if (hour >= 20 || hour < 5) {
+      // 8pm - 4:59am
+      return 'assets/images/bg_evening.png';
+    } else if (hour >= 5 && hour < 7) {
+      // 5am - 6:59am
+      return 'assets/images/bg_sunset.png';
+    } else if (hour >= 7 && hour < 17) {
+      // 7am - 4:59pm
+      return 'assets/images/bg_morning.png';
+    } else {
+      // 5pm - 7:59pm
+      return 'assets/images/bg_morning.png';
+    }
+  }
 
   void _openShop() {
     showShopModal(
@@ -207,10 +239,17 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Scaffold(
         body: Stack(
           children: [
+            Positioned.fill(
+              child: Image.asset(
+                _getBackgroundImageForCurrentTime(),
+                fit: BoxFit.cover,
+              ),
+            ),
             Center(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.5),
                   GestureDetector(
                     onTap: _incrementCounter,
                     child: Image(

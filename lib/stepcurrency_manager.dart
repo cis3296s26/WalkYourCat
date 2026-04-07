@@ -6,6 +6,9 @@ class StepCurrencyManager {
   int totalCoins = 0; // total coins earned
   int lastCheckedSteps = 0; // last step count when steps were processed for coins
   int unprocessedSteps = 0; // steps that have been fetched but not processed for coins yet
+
+  int startOfDaySteps = 0;
+  int lastDate = 0;
   /* -- END OF VARIABLE DECLARATIONS -- */
 
   /* ----- LOAD & SAVE FUNCTIONS ----- */
@@ -15,6 +18,8 @@ class StepCurrencyManager {
     totalCoins = prefsL.getInt('totalCoins') ?? totalCoins;
     lastCheckedSteps = prefsL.getInt('lastCheckedSteps') ?? lastCheckedSteps;
     unprocessedSteps = prefsL.getInt('unprocessedSteps') ?? unprocessedSteps;
+
+    lastDate = prefsL.getInt('lastDay') ?? DateTime.now().day;
   }
 
   /// This method saves the current state of coins and steps to persistent storage.
@@ -23,11 +28,25 @@ class StepCurrencyManager {
     await prefsS.setInt('totalCoins', totalCoins);
     await prefsS.setInt('lastCheckedSteps', lastCheckedSteps);
     await prefsS.setInt('unprocessedSteps', unprocessedSteps);
+
+    await prefsS.setInt('lastDay', lastDate);
   }
   /* --- END OF LOAD & SAVE FUNCTIONS --- */
 
   /// This method processes new steps and updates the coin balance accordingly.
-  Future<void> processNewSteps(int steps) async {
+  Future<int> processNewSteps(int steps) async {
+    /* --- FOR DAILY STEP RESET --- */
+    // get current day
+    int currentDay = DateTime.now().day;
+
+    // check if a new day to reset
+    if (currentDay != lastDate) {
+      startOfDaySteps = steps; // Set new baseline
+      lastDate = currentDay;   // Update the day
+      unprocessedSteps = 0; 
+    }
+    /* --- END OF DAILY STEP RESET --- */
+
     /* --- variables --- */
     int newSteps = 0; // initialize new steps variable
 
@@ -37,6 +56,7 @@ class StepCurrencyManager {
     } else {
       // case: for when the step count resets, treat all steps as new
       newSteps = steps;
+      startOfDaySteps = 0; 
     }
 
     // update last checked steps and unprocessed steps
@@ -54,6 +74,12 @@ class StepCurrencyManager {
 
     // save the updated state
     await saveState();
+
+    // calculate daily steps for display
+    int dailySteps = steps - startOfDaySteps;
+    if (dailySteps < 0) dailySteps = steps;
+
+    return dailySteps;
   }
 
   Future<int> getCoinBalance() async {
