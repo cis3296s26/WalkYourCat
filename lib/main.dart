@@ -6,7 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
-import 'package:walkyourcat/navbar.dart';
 import 'package:walkyourcat/features/shop/shop_modal.dart';
 import 'package:add_to_cart_animation/add_to_cart_animation.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
@@ -46,17 +45,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'WalkYourCat',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'WalkYourCat Scrum 3 Demo'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -207,38 +205,6 @@ class _MyHomePageState extends State<MyHomePage> {
         this.runAddToCartAnimation = runAddToCartAnimation;
       },
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: PopupMenuButton<SampleItem>(
-                initialValue: _selectedItem,
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SampleItem>>[
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionOne,
-                    child: Text('Settings'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionTwo,
-                    child: Text('Profile/Account'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionThree,
-                    child: Text('Social'),
-                  ),
-                  PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionFour,
-                    onTap: _openChallengesHistory,
-                    child: Text('Challenges History'),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
         body: Stack(
           children: [
             Center(
@@ -257,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
             /* ------- STEP & COIN COUNTER WIDGETS --- */
             Positioned(
-              top: 16,
+              top: 36,
               left: 16,
               child: Row(
                 children: [
@@ -303,15 +269,44 @@ class _MyHomePageState extends State<MyHomePage> {
 
             //stats bar
             Positioned(
-              top: 60, // sits just below the steps + coins row
+              top: 80, // sits just below the steps + coins row
               left: 16,
               child: CatStatsBar(),
+            ),
+
+            Positioned(
+              top: 36,
+              right: 16,
+              child: PopupMenuButton<SampleItem>(
+                initialValue: _selectedItem,
+                icon: const Icon(Icons.more_vert),
+                itemBuilder: (BuildContext context) =>
+                    <PopupMenuEntry<SampleItem>>[
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionOne,
+                    child: Text('Settings'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionTwo,
+                    child: Text('Profile/Account'),
+                  ),
+                  const PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionThree,
+                    child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openChallengesHistory,
+                    child: const Text('Challenges History'),
+                  ),
+                ],
+              ),
             ),
 
             /* ------- FLOATING CHALLENGE BUTTON (bottom-right) --- */
             Positioned(
               bottom: 24,
-              right: 90,
+              left: 90,
               child: GestureDetector(
                 onTap: _openChallenges,
                 child: Container(
@@ -397,7 +392,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        bottomNavigationBar: const CustomBottomNav(),
       ),
     );
   }
