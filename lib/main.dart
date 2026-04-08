@@ -14,8 +14,8 @@ import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
-import 'package:walkyourcat/features/challenges/challenges_modal.dart';
-import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
+import 'package:walkyourcat/features/challenges/challenges_ui.dart';
+// import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
@@ -138,11 +138,9 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openChallenges() {
     showChallengesModal(context);
   }
-
-  void _openChallengesHistory() {
-    showChallengesHistoryModal(context);
-  }
-
+  //   void _openChallengesHistory() {
+  //   showChallengesHistoryModal(context);
+  // }
   void _playItemAnimation(String tag) async {
     /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
     // --------- FOOD --------
@@ -333,11 +331,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     value: SampleItem.optionThree,
                     child: Text('Social'),
                   ),
-                  PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionFour,
-                    onTap: _openChallengesHistory,
-                    child: const Text('Challenges History'),
-                  ),
+                  // PopupMenuItem<SampleItem>(
+                  //   value: SampleItem.optionFour,
+                  //   onTap: _openChallengesHistory,
+                  //   child: const Text('Challenges History'),
+                  // ),
                 ],
               ),
             ),
