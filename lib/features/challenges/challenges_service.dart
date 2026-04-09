@@ -89,6 +89,7 @@ class ChallengesService {
         targetValue = 10000; // 10ksteps
         rewardCoins = 1000;
         description = "Walk ${targetValue} steps to keep your cat company.";
+        debugPrint("[CHAL] Generated Walking Challenge: $description");
       } 
       else if (id == 'chal_002') { // Feeding
         final foods = ["premium tuna", "salmon", "chicken", "beef", "dry kibble"];
@@ -97,12 +98,14 @@ class ChallengesService {
         rewardCoins = targetValue * 15;
         metaTarget = selectedFood;
         description = "Feed your cat $selectedFood $targetValue times.";
+        debugPrint("[CHAL] Generated Feeding Challenge: $description");
       }
       else if (id == 'chal_003') { // Petting
         targetValue = 5 + random.nextInt(16); // 5 - 20
         rewardCoins = targetValue * 5;
         metaTarget = targetValue.toString();
         description = "Pet your cat $targetValue times.";
+        debugPrint("[CHAL] Generated Petting Challenge: $description");
       }
 
       generated.add(Challenge(
