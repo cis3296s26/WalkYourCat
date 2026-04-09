@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'challenge_item.dart';
+import 'package:walkyourcat/features/achievements/achievements_service.dart';
 
 class ChallengesService {
   static final ChallengesService instance = ChallengesService._init();
@@ -136,6 +137,8 @@ class ChallengesService {
         }
 
         int newProgress = c.progress + amount;
+        bool justCompleted = newProgress >= c.targetValue;
+
         if (newProgress > c.targetValue) newProgress = c.targetValue;
         
         await db.update(
@@ -144,6 +147,10 @@ class ChallengesService {
           where: 'id = ?',
           whereArgs: [c.id],
         );
+
+        if (justCompleted) {
+          AchievementsService.instance.recordChallengeCompletion(c);
+        }
       }
     }
   }

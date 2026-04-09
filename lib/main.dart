@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:walkyourcat/features/achievements/achievements_modal.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
@@ -14,8 +15,8 @@ import 'package:walkyourcat/features/inventory/inventory_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
-import 'package:walkyourcat/features/challenges/challenges_modal.dart';
-import 'package:walkyourcat/features/challenges/challenges_history_modal.dart';
+import 'package:walkyourcat/features/challenges/challenges_ui.dart';
+import 'package:walkyourcat/features/map/map_modal.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
@@ -108,7 +109,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter++;
       _currentCatImage = 'assets/animations/petted_cat.gif';
-      CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
+      CatStatsBar.updateStats(
+          food: 0, health: 0); // TO TEST STAT CHANGES ON PET INTERACTION
       ChallengesService.instance.addProgress('petting', 1);
     });
 
@@ -135,12 +137,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _openChallenges() {
-    showChallengesModal(context);
+  void _openMap() {
+    showMapModal(context);
   }
 
-  void _openChallengesHistory() {
-    showChallengesHistoryModal(context);
+  void _openChallenges() {
+    showChallengesModal(context);
   }
 
   void _playItemAnimation(String tag) async {
@@ -333,11 +335,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     value: SampleItem.optionThree,
                     child: Text('Social'),
                   ),
-                  PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionFour,
-                    onTap: _openChallengesHistory,
-                    child: const Text('Challenges History'),
-                  ),
                 ],
               ),
             ),
@@ -427,6 +424,35 @@ class _MyHomePageState extends State<MyHomePage> {
                         active: false,
                       ),
                     )),
+              ),
+            ),
+
+            /* ------- FLOATING Map BUTTON (bottom-right) --- */
+            Positioned(
+              bottom: 24,
+              right: 90,
+              child: GestureDetector(
+                onTap: _openMap,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.deepPurple,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.map,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
               ),
             ),
           ],
