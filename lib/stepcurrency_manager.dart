@@ -19,6 +19,7 @@ class StepCurrencyManager {
     totalCoins = prefsL.getInt('totalCoins') ?? totalCoins;
     lastCheckedSteps = prefsL.getInt('lastCheckedSteps') ?? lastCheckedSteps;
     unprocessedSteps = prefsL.getInt('unprocessedSteps') ?? unprocessedSteps;
+    startOfDaySteps = prefsL.getInt('startOfDaySteps') ?? startOfDaySteps;
 
     lastDate = prefsL.getInt('lastDay') ?? DateTime.now().day;
   }
@@ -29,6 +30,7 @@ class StepCurrencyManager {
     await prefsS.setInt('totalCoins', totalCoins);
     await prefsS.setInt('lastCheckedSteps', lastCheckedSteps);
     await prefsS.setInt('unprocessedSteps', unprocessedSteps);
+    await prefsS.setInt('startOfDaySteps', startOfDaySteps);
 
     await prefsS.setInt('lastDay', lastDate);
   }
@@ -44,6 +46,7 @@ class StepCurrencyManager {
     if (currentDay != lastDate) {
       startOfDaySteps = steps; // Set new baseline
       lastDate = currentDay;   // Update the day
+      lastCheckedSteps = steps; // Avoid carrying over yesterday's count
       unprocessedSteps = 0; 
       await ChallengesService.instance.clearChallenges(); // Reset daily challenges
     }
@@ -81,8 +84,10 @@ class StepCurrencyManager {
     int dailySteps = steps - startOfDaySteps;
     if (dailySteps < 0) dailySteps = steps;
 
-    // Update challenge progress with the new steps taken
-    await ChallengesService.instance.addProgress('walking', 1);
+    // Update challenge progress with the actual step difference since last update.
+    if (newSteps > 0) {
+      await ChallengesService.instance.addProgress('walking', newSteps);
+    }
 
     return dailySteps;
   }
