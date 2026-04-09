@@ -92,7 +92,8 @@ class ChallengesService {
         description = "Walk ${targetValue} steps to keep your cat company.";
       } 
       else if (id == 'chal_002') { // Feeding
-        final foods = ["premium tuna", "salmon", "chicken", "beef", "dry kibble"];
+        // final foods = ["premium tuna", "salmon", "chicken", "beef", "dry kibble"];
+        final foods = ["apple"];
         final selectedFood = foods[random.nextInt(foods.length)];
         targetValue = 1 + random.nextInt(4); // 1 - 4
         rewardCoins = targetValue * 15;

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:walkyourcat/features/achievements/achievements_modal.dart';
+import 'package:walkyourcat/features/achievements/achievments_modal.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
@@ -143,6 +143,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _openChallenges() {
     showChallengesModal(context);
+  }
+
+  void _openAchievements() {
+    showAchievementsModal(context);
   }
 
   void _playItemAnimation(String tag) async {
@@ -334,6 +338,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   const PopupMenuItem<SampleItem>(
                     value: SampleItem.optionThree,
                     child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openAchievements,
+                    child: Text('Achievements'),
                   ),
                 ],
               ),
