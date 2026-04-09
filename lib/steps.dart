@@ -65,10 +65,10 @@ class StepCounterState extends State<StepCounter> {
     debugPrint('onStepCount: ${event.steps}');
 
     // process new steps and update coins
-    await currManager.processNewSteps(event.steps);
+    int dailySteps = await currManager.processNewSteps(event.steps);
 
     setState(() {
-      _steps = event.steps.toString();
+      _steps = dailySteps.toString();
     });
 
     // update coins in parent widget
