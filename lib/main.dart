@@ -346,8 +346,8 @@ class _MyHomePageState extends State<MyHomePage> {
               child: GestureDetector(
                 onTap: _openChallenges,
                 child: Container(
-                  width: 45,
-                  height: 45,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.deepPurple,
