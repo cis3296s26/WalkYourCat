@@ -93,12 +93,16 @@ class ChallengesService {
         debugPrint("[CHAL] Generated Walking Challenge: $description");
       } 
       else if (id == 'chal_002') { // Feeding
-        final foods = ["premium tuna", "salmon", "chicken", "beef", "dry kibble"];
-        final selectedFood = foods[random.nextInt(foods.length)];
+        // get food items from shop_items.json
+        final itemsJsonString = await rootBundle.loadString('assets/shop_items.json');
+        final itemsJson = json.decode(itemsJsonString) as Map<String, dynamic>;
+        final foods = (itemsJson['items'] as List<dynamic>).where((item) => item['tag'] == 'food').toList();
+
+        final selectedFood = foods[random.nextInt(foods.length)] as Map<String, dynamic>;
         targetValue = 1 + random.nextInt(4); // 1 - 4
         rewardCoins = targetValue * 15;
-        metaTarget = selectedFood;
-        description = "Feed your cat $selectedFood $targetValue times.";
+        metaTarget = (selectedFood['id'] as int).toString();
+        description = "Feed your cat ${selectedFood['name']} $targetValue times.";
         debugPrint("[CHAL] Generated Feeding Challenge: $description");
       }
       else if (id == 'chal_003') { // Petting
