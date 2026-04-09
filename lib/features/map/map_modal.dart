@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 void showMapModal(BuildContext context) {
   showModalBottomSheet(
@@ -40,24 +42,22 @@ class MapModalContent extends StatelessWidget {
 
         const SizedBox(height: 10),
 
-        // PLACEHOLDER!!! replace later with real map
-        Expanded(
-          child: Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text(
-                "Map will appear here",
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-        ),
+        const Expanded(child: MapModalService()),
       ],
     );
   }
 }
 
+class MapModalService extends StatefulWidget {
+  const MapModalService({super.key});
+
+  @override
+  State<MapModalService> createState() => _MapModalServiceState();
+}
+
+class _MapModalServiceState extends State<MapModalService> {
+  @override
+  Widget build(BuildContext context) {
+    
+  }
+}
