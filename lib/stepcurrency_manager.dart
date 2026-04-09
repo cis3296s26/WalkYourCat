@@ -3,6 +3,14 @@ import 'package:shared_preferences/shared_preferences.dart'; // for storing coin
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 
 class StepCurrencyManager {
+  static final StepCurrencyManager _instance = StepCurrencyManager._init();
+  
+  factory StepCurrencyManager() {
+    return _instance;
+  }
+  
+  StepCurrencyManager._init();
+
   /* ----- VARIABLE DECLARATIONS ----- */
   int totalCoins = 0; // total coins earned
   int lastCheckedSteps = 0; // last step count when steps were processed for coins
@@ -102,4 +110,12 @@ class StepCurrencyManager {
     totalCoins = coins;
     await saveState();
   }
+
+  /// Adds coins to the balance when a challenge is completed
+  Future<void> addCoins(int coins) async {
+    await loadState();
+    totalCoins += coins;
+    await saveState();
+  }
 }
+

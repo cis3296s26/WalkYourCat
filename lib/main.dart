@@ -111,8 +111,10 @@ class _MyHomePageState extends State<MyHomePage> {
       _currentCatImage = 'assets/animations/petted_cat.gif';
       CatStatsBar.updateStats(
           food: 0, health: 0); // TO TEST STAT CHANGES ON PET INTERACTION
-      ChallengesService.instance.addProgress('petting', 1);
     });
+
+    await ChallengesService.instance.addProgress('petting', 1);
+    await _loadCoins(); // Refresh coins if a challenge was completed
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -132,6 +134,8 @@ class _MyHomePageState extends State<MyHomePage> {
         // Start animation
         _playItemAnimation(invItem.item.tag);
 
+        await _loadCoins();
+
         return true;
       },
     );
@@ -142,7 +146,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openChallenges() {
-    showChallengesModal(context);
+    showChallengesModal(
+      context,
+      onCoinsAdded: () async {
+        await _loadCoins();
+        if (mounted) {
+          setState(() {});
+        }
+      },
+    );
   }
 
   void _playItemAnimation(String tag) async {

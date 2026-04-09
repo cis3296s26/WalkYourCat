@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'challenge_item.dart';
 import 'package:walkyourcat/features/achievements/achievements_service.dart';
+import 'package:walkyourcat/stepcurrency_manager.dart';
 
 class ChallengesService {
   static final ChallengesService instance = ChallengesService._init();
@@ -154,6 +155,7 @@ class ChallengesService {
 
         if (justCompleted) {
           AchievementsService.instance.recordChallengeCompletion(c);
+          await StepCurrencyManager().addCoins(c.rewardCoins);
         }
       }
     }
