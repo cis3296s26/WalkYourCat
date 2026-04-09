@@ -108,7 +108,8 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _counter++;
       _currentCatImage = 'assets/animations/petted_cat.gif';
-      CatStatsBar.updateStats(food: 0, health: 0);  // TO TEST STAT CHANGES ON PET INTERACTION
+      CatStatsBar.updateStats(
+          food: 0, health: 0); // TO TEST STAT CHANGES ON PET INTERACTION
       ChallengesService.instance.addProgress('petting', 1);
     });
 
@@ -133,6 +134,10 @@ class _MyHomePageState extends State<MyHomePage> {
         return true;
       },
     );
+  }
+
+  void _openMap() {
+    showMapModal(context);
   }
 
   void _openChallenges() {
@@ -418,6 +423,35 @@ class _MyHomePageState extends State<MyHomePage> {
                         active: false,
                       ),
                     )),
+              ),
+            ),
+
+            /* ------- FLOATING Map BUTTON (bottom-right) --- */
+            Positioned(
+              bottom: 24,
+              right: 90,
+              child: GestureDetector(
+                onTap: _openMap,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.deepPurple,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.map,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
               ),
             ),
           ],
