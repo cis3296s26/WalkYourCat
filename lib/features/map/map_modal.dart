@@ -58,6 +58,27 @@ class MapModalService extends StatefulWidget {
 class _MapModalServiceState extends State<MapModalService> {
   @override
   Widget build(BuildContext context) {
-    
+    return FlutterMap(
+      options: MapOptions(
+        initialCenter:
+            LatLng(39.9812, -75.1554), // Center the map over Philadelphia, PA
+        initialZoom: 17.0,
+        keepAlive: true,
+      ),
+      children: [
+        TileLayer(
+          urlTemplate:
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'app',
+        ),
+        RichAttributionWidget(
+          attributions: [
+            TextSourceAttribution(
+              'OpenStreetMap contributors'
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }
