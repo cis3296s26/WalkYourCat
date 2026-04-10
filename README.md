@@ -2,7 +2,7 @@
 ## CIS 3296 Final Project
 WalkYourCat is for people who want motivation to increase their daily physical activity and exercise. It is a fitness app grounded in game theory that allows users to convert their physical activity into a positive response loop by taking care of their virtual pet.
 
-![This is a screenshot.](week3picture.png)
+![This is a screenshot.](week4picture.png)
 
 ## UML Class Diagram
 
@@ -58,7 +58,7 @@ Follow this project board to know the latest status of the project: [https://git
 - To be able to run the code dart: ">=3.9.0-0 <4.0.0" and flutter: ">=3.35.0" is required to be installed prior.
 - Go to "How to run" to see how to run the app.
 
-## How to Install & Build
+## How to Build
 ### Android
 From the Command line directly to your device:
 - Connect your Android-powered device to your computer with a USB cable.
@@ -101,3 +101,16 @@ Alternatively, an `ipa` can be built for iOS with the following command:
 - Builds a native Linux executable
 
     - ```flutter build linux```
+
+
+## How to install
+### Android
+- Follow instructions given in Build to enable developer mode on your device.
+- Download the ```.apk``` file from the latest [release](https://github.com/cis3296s26/WalkYourCat/releases) to your device.
+- After downloading the file to your Android device, run the ```.apk``` and give it the permission to install WalkYourCat.
+
+
+Note: If using an Android emulator, the ```.apk``` file can be dragged and dropped from the file explorer of your operating system to anywhere on the emulator screen. Alternatively, one can run ```adb install path\to\apk``` to transfer the file to the emulator. Subsequently, the above step can be performed to install the app using the ```.apk```.
+
+### iOS (on macOS only)
+Refer to Build instructions for installation process.
