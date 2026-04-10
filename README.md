@@ -26,7 +26,7 @@ flutter doctor -v
 ### fix errors first before continuing:
 ```
 flutter clean
-flutter get pub
+flutter pub get
 ```
 - If the above steps have been done before just skip to the next command
 - Download the latest binary from the Release section on the right on GitHub.  
