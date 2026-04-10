@@ -1,7 +1,16 @@
 // IMPORT STATEMENTS
 import 'package:shared_preferences/shared_preferences.dart'; // for storing coin balance persistently
+import 'package:walkyourcat/features/challenges/challenges_service.dart';
 
 class StepCurrencyManager {
+  static final StepCurrencyManager _instance = StepCurrencyManager._init();
+  
+  factory StepCurrencyManager() {
+    return _instance;
+  }
+  
+  StepCurrencyManager._init();
+
   /* ----- VARIABLE DECLARATIONS ----- */
   int totalCoins = 0; // total coins earned
   int lastCheckedSteps = 0; // last step count when steps were processed for coins
@@ -18,6 +27,7 @@ class StepCurrencyManager {
     totalCoins = prefsL.getInt('totalCoins') ?? totalCoins;
     lastCheckedSteps = prefsL.getInt('lastCheckedSteps') ?? lastCheckedSteps;
     unprocessedSteps = prefsL.getInt('unprocessedSteps') ?? unprocessedSteps;
+    startOfDaySteps = prefsL.getInt('startOfDaySteps') ?? startOfDaySteps;
 
     lastDate = prefsL.getInt('lastDay') ?? DateTime.now().day;
   }
@@ -28,6 +38,7 @@ class StepCurrencyManager {
     await prefsS.setInt('totalCoins', totalCoins);
     await prefsS.setInt('lastCheckedSteps', lastCheckedSteps);
     await prefsS.setInt('unprocessedSteps', unprocessedSteps);
+    await prefsS.setInt('startOfDaySteps', startOfDaySteps);
 
     await prefsS.setInt('lastDay', lastDate);
   }
@@ -43,7 +54,9 @@ class StepCurrencyManager {
     if (currentDay != lastDate) {
       startOfDaySteps = steps; // Set new baseline
       lastDate = currentDay;   // Update the day
+      lastCheckedSteps = steps; // Avoid carrying over yesterday's count
       unprocessedSteps = 0; 
+      await ChallengesService.instance.clearChallenges(); // Reset daily challenges
     }
     /* --- END OF DAILY STEP RESET --- */
 
@@ -79,6 +92,11 @@ class StepCurrencyManager {
     int dailySteps = steps - startOfDaySteps;
     if (dailySteps < 0) dailySteps = steps;
 
+    // Update challenge progress with the actual step difference since last update.
+    if (newSteps > 0) {
+      await ChallengesService.instance.addProgress('walking', newSteps);
+    }
+
     return dailySteps;
   }
 
@@ -92,4 +110,12 @@ class StepCurrencyManager {
     totalCoins = coins;
     await saveState();
   }
+
+  /// Adds coins to the balance when a challenge is completed
+  Future<void> addCoins(int coins) async {
+    await loadState();
+    totalCoins += coins;
+    await saveState();
+  }
 }
+
