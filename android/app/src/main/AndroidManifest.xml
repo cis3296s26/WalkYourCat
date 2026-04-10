@@ -2,7 +2,10 @@
     <!-- ____ PEDOMETER PERMISSION HERE ____ -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <!-- ___ END OF PEDOMETER PERMISSION HERE -->
-
+     <!-- ____ LOCATION PERMISSIONS HERE ____ -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- ___ END OF LOCATION PERMISSIONS HERE -->
     <application
         android:label="walkyourcat"
         android:name="${applicationName}"

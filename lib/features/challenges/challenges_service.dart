@@ -6,6 +6,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'challenge_item.dart';
 import 'package:walkyourcat/features/achievements/achievements_service.dart';
+import 'package:walkyourcat/stepcurrency_manager.dart';
 
 class ChallengesService {
   static final ChallengesService instance = ChallengesService._init();
@@ -87,23 +88,30 @@ class ChallengesService {
       String? metaTarget = template['metaTarget'];
 
       if (id == 'chal_001') { // Walking
-        targetValue = 5000 + random.nextInt(10000); // 5000 - 14999
-        rewardCoins = (targetValue / 100).round();
+        targetValue = 10000; // 10ksteps
+        rewardCoins = 1000;
         description = "Walk ${targetValue} steps to keep your cat company.";
+        debugPrint("[CHAL] Generated Walking Challenge: $description");
       } 
       else if (id == 'chal_002') { // Feeding
-        final foods = ["premium tuna", "salmon", "chicken", "beef", "dry kibble"];
-        final selectedFood = foods[random.nextInt(foods.length)];
+        // get food items from shop_items.json
+        final itemsJsonString = await rootBundle.loadString('assets/shop_items.json');
+        final itemsJson = json.decode(itemsJsonString) as Map<String, dynamic>;
+        final foods = (itemsJson['items'] as List<dynamic>).where((item) => item['tag'] == 'food').toList();
+
+        final selectedFood = foods[random.nextInt(foods.length)] as Map<String, dynamic>;
         targetValue = 1 + random.nextInt(4); // 1 - 4
         rewardCoins = targetValue * 15;
-        metaTarget = selectedFood;
-        description = "Feed your cat $selectedFood $targetValue times.";
+        metaTarget = (selectedFood['id'] as int).toString();
+        description = "Feed your cat ${selectedFood['name']} $targetValue times.";
+        debugPrint("[CHAL] Generated Feeding Challenge: $description");
       }
       else if (id == 'chal_003') { // Petting
         targetValue = 5 + random.nextInt(16); // 5 - 20
         rewardCoins = targetValue * 5;
         metaTarget = targetValue.toString();
         description = "Pet your cat $targetValue times.";
+        debugPrint("[CHAL] Generated Petting Challenge: $description");
       }
 
       generated.add(Challenge(
@@ -147,6 +155,7 @@ class ChallengesService {
 
         if (justCompleted) {
           AchievementsService.instance.recordChallengeCompletion(c);
+          await StepCurrencyManager().addCoins(c.rewardCoins);
         }
       }
     }
