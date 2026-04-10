@@ -3,8 +3,8 @@ import 'challenge_item.dart';
 import 'challenges_service.dart';
 
 // entry point
-void showChallengesModal(BuildContext context) =>
-    showDialog(context: context, builder: (_) => const _ChallengesDialog());
+void showChallengesModal(BuildContext context, {VoidCallback? onCoinsAdded}) =>
+    showDialog(context: context, builder: (_) => _ChallengesDialog(onCoinsAdded: onCoinsAdded));
 
 //theme
 const _kPurple = Color(0xFF7C3AED);
@@ -56,7 +56,8 @@ _TypeConfig _configFor(String type) =>
 
 //dialog
 class _ChallengesDialog extends StatefulWidget {
-  const _ChallengesDialog();
+  final VoidCallback? onCoinsAdded;
+  const _ChallengesDialog({this.onCoinsAdded});
   @override
   State<_ChallengesDialog> createState() => _ChallengesDialogState();
 }

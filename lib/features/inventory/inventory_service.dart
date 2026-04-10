@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
 import './inventory_item.dart';
 import '../shop/shop_item.dart';
+import 'package:walkyourcat/features/challenges/challenges_service.dart'; // to update challenge progress
 
 class InventoryService {
   // Singleton Alert!?
@@ -138,6 +139,8 @@ class InventoryService {
       /* -- FOOD -- */
       case 'food':
         debugPrint("Used food item: ${invItem.item.name}.");
+        // add item if it's part of the challenge metaTarget
+        await ChallengesService.instance.addProgress('feeding', 1, metaTargetFilter: invItem.item.id.toString());
         break;
       /* -- MEDICINE -- */
       case 'medicine':
