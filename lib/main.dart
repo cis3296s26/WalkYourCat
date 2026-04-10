@@ -157,6 +157,10 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _openAchievements() {
+    showAchievementsModal(context);
+  }
+
   void _playItemAnimation(String tag) async {
     /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
     // --------- FOOD --------
@@ -346,6 +350,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   const PopupMenuItem<SampleItem>(
                     value: SampleItem.optionThree,
                     child: Text('Social'),
+                  ),
+                  PopupMenuItem<SampleItem>(
+                    value: SampleItem.optionFour,
+                    onTap: _openAchievements,
+                    child: Text('Achievements'),
                   ),
                 ],
               ),
