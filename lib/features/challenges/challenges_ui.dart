@@ -79,7 +79,7 @@ class _ChallengesDialogState extends State<_ChallengesDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text('Daily Challenges',
+            const Text('Purrsuits',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w900,
