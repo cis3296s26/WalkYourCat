@@ -48,6 +48,8 @@ dependencies:
   sqflite_common_ffi_web: ^0.4.5+4
   flutter_map: ^8.2.2
   flutter_latlong: ^1.0.3
+  firebase_database: ^12.2.0
+  firebase_core: ^4.6.0
 
 dev_dependencies:
   flutter_test:
