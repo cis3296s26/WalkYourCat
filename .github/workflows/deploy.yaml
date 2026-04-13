@@ -2,7 +2,7 @@ name: Deploy Flutter Web
 
 on:
   push:
-    branches: ["feat/auto-deploy"] # The branch that will actually have the commits
+    branches: ["main"] # The branch that will actually have the commits
   workflow_dispatch:
 
 permissions:
