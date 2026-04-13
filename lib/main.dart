@@ -114,6 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     await ChallengesService.instance.addProgress('petting', 1);
+    await StepCurrencyManager().simulateSteps(5);
     await _loadCoins(); // Refresh coins if a challenge was completed
 
     await Future.delayed(const Duration(seconds: 2));

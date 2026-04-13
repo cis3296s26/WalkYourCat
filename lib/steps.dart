@@ -4,6 +4,7 @@ import 'package:pedometer/pedometer.dart';                      // for pedometer
 import 'package:permission_handler/permission_handler.dart';    // for requesting permissions
 import 'dart:async';                                            // for async functions
 import 'package:walkyourcat/stepcurrency_manager.dart';         // for managing coins and steps
+import 'package:flutter/foundation.dart';
 
 class StepCounter extends StatefulWidget {
   const StepCounter({super.key, required this.title, required this.onCoinsUpdated});
@@ -47,6 +48,22 @@ class StepCounterState extends State<StepCounter> {
     await currManager.loadState();
     widget.onCoinsUpdated(currManager.totalCoins);
 
+    if (kIsWeb) {
+      debugPrint('Running on Web: Hardware pedometer disabled. Using simulation logic.');
+      
+      // Calculate and display whatever steps are currently saved in the manager
+      int dailySteps = currManager.lastCheckedSteps - currManager.startOfDaySteps;
+      if (dailySteps < 0) dailySteps = currManager.lastCheckedSteps;
+
+      if (mounted) {
+        setState(() {
+          _steps = dailySteps.toString();
+        });
+      }
+      
+      // DO NOT REMOVE THIS IT WILL BREAK PLEASE :)
+      return; 
+    }
 
     bool granted = await _checkActivityRecognitionPermission();
     if (!granted) {
@@ -89,6 +106,12 @@ class StepCounterState extends State<StepCounter> {
   /* ------- BUILD FUNCTION ------- */
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      int dailySteps = currManager.lastCheckedSteps - currManager.startOfDaySteps;
+      if (dailySteps < 0) dailySteps = currManager.lastCheckedSteps;
+      _steps = dailySteps.toString();
+    }
+    
     return Card(
       color: Colors.deepPurple,
       shape: RoundedRectangleBorder(
