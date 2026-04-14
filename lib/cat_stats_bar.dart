@@ -30,14 +30,6 @@ class CatStatsController extends ChangeNotifier {
     // Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
 
     Timer.periodic(const Duration(minutes: 1), (_) => _applyDecay());
-
-    // check if HP is at 0, this will run repeatedly as long as the condition is met.
-    Timer.periodic(const Duration(seconds: 2), (_) {
-      if (health <= 0) {
-        // print debug message
-        debugPrint("[STAT]: Cat is at 0 HP.");
-      }
-    });
   }
 
   /* Decay Logic */
@@ -153,11 +145,17 @@ class CatStatsController extends ChangeNotifier {
     await prefs.setDouble(_foodKey, food);
     await prefs.setDouble(_healthKey, health);
   }
+
+  /// Resets all stats to 100. Used for reviving the cat.
+  Future<void> revive() async {
+    debugPrint("[STAT]: REVIVE() WAS CALLED");
+  }
 }
 
 /* UI Widget */
 class CatStatsBar extends StatelessWidget {
-  const CatStatsBar({super.key});
+  const CatStatsBar({super.key, this.onDeath});
+  final VoidCallback? onDeath;    // for when HP reaches 0
 
   // Legacy wrapper for old code
   static Future<void> updateStats({int? food, int? health, int? happiness}) {
