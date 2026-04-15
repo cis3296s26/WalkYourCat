@@ -229,3 +229,78 @@ class NearbyPlace {
     }
   }
 }
+// Overpass API = a way to get map data from OpenStreetMap
+// We use it to find parks, trails, and walking areas near the user
+
+// Different Overpass servers (we try another if one fails)
+const _overpassEndpoints = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.openstreetmap.ru/api/interpreter',
+];
+
+Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
+  // How far from the user we want to search (in meters)
+  const double radiusMeters = 2500;
+
+  // User's location
+  final lat = center.latitude;
+  final lon = center.longitude;
+
+  // This query asks OpenStreetMap:
+  // "Give me parks, trails, paths, and nature areas near this location"
+  final query =
+      '[out:json][timeout:30];' // return data as JSON
+      '('
+      'way["leisure"~"^(park|nature_reserve|recreation_ground|garden|common|pitch|dog_park)\$"]'
+      '(around:$radiusMeters,$lat,$lon);'
+      'way["landuse"~"^(recreation_ground|village_green|grass|forest|meadow)\$"]'
+      '(around:$radiusMeters,$lat,$lon);'
+      'way["route"="hiking"](around:$radiusMeters,$lat,$lon);'
+      'way["highway"~"^(path|footway|cycleway|bridleway|track)\$"]["foot"!="no"]'
+      '(around:$radiusMeters,$lat,$lon);'
+      'way["natural"~"^(wood|scrub|heath|grassland|wetland)\$"]'
+      '(around:$radiusMeters,$lat,$lon);'
+      ');'
+      'out geom;'; // include coordinates so we can draw the shape on the map
+
+  http.Response? response;
+
+  // Try each server until one works
+  for (final endpoint in _overpassEndpoints) {
+    try {
+      response = await http
+          .post(
+            Uri.parse(endpoint),
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: {'data': query},
+          )
+          .timeout(const Duration(seconds: 35));
+
+      // Stop if we got a good response
+      if (response.statusCode == 200 && response.body.startsWith('{')) break;
+    } catch (_) {
+      // If it fails, try the next server
+      response = null;
+    }
+  }
+
+  // If all servers fail, return nothing
+  if (response == null || response.statusCode != 200) {
+    debugPrint('Overpass: all endpoints failed');
+    return [];
+  }
+
+  final Map<String, dynamic> data;
+
+  try {
+    // Convert the response into usable data
+    data = jsonDecode(response.body) as Map<String, dynamic>;
+  } catch (e) {
+    // If something goes wrong reading it
+    debugPrint('Overpass JSON parse error: $e');
+    return [];
+  }
+  
