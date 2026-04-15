@@ -304,3 +304,168 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     return [];
   }
   
+// Get list of map elements from Overpass API response
+final elements = (data['elements'] as List<dynamic>?) ?? [];
+
+// Debug: print how many elements we got back
+debugPrint('Overpass returned ${elements.length} elements');
+
+// Predefined colors used to visually distinguish places
+final colors = [
+  const Color(0xFF2ECC71),
+  const Color(0xFF3498DB),
+  const Color(0xFFE67E22),
+  const Color(0xFF9B59B6),
+  const Color(0xFFE74C3C),
+  const Color(0xFF1ABC9C),
+  const Color(0xFFF39C12),
+  const Color(0xFF27AE60),
+  const Color(0xFF8E44AD),
+  const Color(0xFFD35400),
+];
+
+// Final list of places we will return
+final List<NearbyPlace> places = [];
+
+// Used to avoid adding duplicate places
+final Set<String> seenIds = {};
+
+// Keeps track of which color to assign next place
+int colorIndex = 0;
+
+// Helper for distance calculations
+const Distance distCalc = Distance();
+
+// Loop through all elements from API
+for (final el in elements) {
+  // Only keep "way" type elements (polygons/areas)
+  if (el['type'] != 'way') continue;
+
+  // Create a unique ID for this element
+  final String elId = '${el['type']}-${el['id']}';
+
+  // Skip if we already processed this place
+  if (seenIds.contains(elId)) continue;
+
+  // Get tags (metadata like name, type, etc.)
+  final tags = (el['tags'] as Map<String, dynamic>?) ?? {};
+
+  // Try to get a name for the place
+  String name = tags['name'] as String? ?? tags['ref'] as String? ?? '';
+
+  // If no name exists, try to build one from other tags
+  if (name.isEmpty) {
+    final leisure = tags['leisure'] as String?;
+    final landuse = tags['landuse'] as String?;
+    final highway = tags['highway'] as String?;
+    final natural = tags['natural'] as String?;
+    final route = tags['route'] as String?;
+
+    if (leisure != null) {
+      name = _capitalize(leisure.replaceAll('_', ' '));
+    } else if (route == 'hiking') {
+      name = 'Hiking Trail';
+    } else if (highway != null) {
+      name = '${_capitalize(highway.replaceAll('_', ' '))} Path';
+    } else if (landuse != null) {
+      name = '${_capitalize(landuse.replaceAll('_', ' '))} Area';
+    } else if (natural != null) {
+      name = '${_capitalize(natural)} Area';
+    } else {
+      // Skip if we cannot determine a name
+      continue;
+    }
+  }
+
+  // Default type label
+  String typeLabel = 'park';
+
+  // Determine place type based on tags
+  final leisure = tags['leisure'] as String?;
+  final highway = tags['highway'] as String?;
+  final route = tags['route'] as String?;
+  final natural = tags['natural'] as String?;
+  final landuse = tags['landuse'] as String?;
+
+  if (route == 'hiking') typeLabel = 'trail';
+  if (highway != null) typeLabel = 'path';
+  if (leisure == 'nature_reserve') typeLabel = 'nature reserve';
+  if (leisure == 'garden') typeLabel = 'garden';
+  if (natural != null) typeLabel = 'natural area';
+  if (landuse == 'forest') typeLabel = 'forest';
+
+  // Get geometry points that form the shape of the place
+  final geometry = el['geometry'] as List<dynamic>? ?? [];
+
+  final List<LatLng> boundary = geometry
+      .map<LatLng?>((g) {
+        final lat = (g['lat'] as num?)?.toDouble();
+        final lon = (g['lon'] as num?)?.toDouble();
+        if (lat == null || lon == null) return null;
+        return LatLng(lat, lon);
+      })
+      .whereType<LatLng>()
+      .toList();
+
+  // Skip invalid shapes
+  if (boundary.length < 2) continue;
+
+  // Calculate center point of the area
+  final avgLat =
+      boundary.map((p) => p.latitude).reduce((a, b) => a + b) /
+          boundary.length;
+  final avgLon =
+      boundary.map((p) => p.longitude).reduce((a, b) => a + b) /
+          boundary.length;
+
+  final placeCenter = LatLng(avgLat, avgLon);
+
+  // Calculate distance from user to place
+  final d = distCalc.as(LengthUnit.Meter, center, placeCenter);
+
+  // Skip places that are too far away
+  if (d > radiusMeters) continue;
+
+  // Assign coin rewards based on type and size
+  int coins = 15;
+  if (typeLabel == 'nature reserve' || typeLabel == 'forest') coins = 60;
+  else if (typeLabel == 'park' && boundary.length > 30) coins = 50;
+  else if (typeLabel == 'park') coins = 35;
+  else if (typeLabel == 'trail' || typeLabel == 'path') coins = 25;
+  else if (typeLabel == 'natural area') coins = 40;
+  else if (typeLabel == 'garden') coins = 20;
+
+  // Mark as seen so we don’t duplicate it
+  seenIds.add(elId);
+
+  // Add place to final list
+  places.add(NearbyPlace(
+    id: elId,
+    name: name,
+    type: typeLabel,
+    center: placeCenter,
+    boundary: boundary,
+    coinReward: coins,
+    color: colors[colorIndex % colors.length],
+  ));
+
+  // Move to next color
+  colorIndex++;
+
+  // Limit number of results
+  if (places.length >= 15) break;
+}
+
+// Debug: final number of parsed places
+debugPrint('Parsed ${places.length} nearby places');
+
+// Sort places by distance (closest first)
+places.sort((a, b) => distCalc
+    .as(LengthUnit.Meter, center, a.center)
+    .compareTo(distCalc.as(LengthUnit.Meter, center, b.center)));
+
+return places;
+
+// Helper function: make first letter uppercase
+String _capitalize(String s) =>
+    s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
