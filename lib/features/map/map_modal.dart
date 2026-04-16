@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:walkyourcat/features/map/map_db_service.dart';
+
+final _service = LocationDbService();
 
 void showMapModal(BuildContext context) {
   showModalBottomSheet(
@@ -57,6 +60,9 @@ class _MapModalServiceState extends State<MapModalService> {
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionSubscription;
 
+  // For storing the fetched users
+  final List<Map<String, dynamic>> _otherUsers = [];
+
   @override
   void initState() {
     super.initState();
@@ -73,6 +79,19 @@ class _MapModalServiceState extends State<MapModalService> {
       if (permission == LocationPermission.denied) return;
     }
     if (permission == LocationPermission.deniedForever) return;
+
+    // Should store all users
+    print("Starting location db connection");
+    _service.startLocationSharing(
+      onNewUserFound: (userData) {
+        if (mounted) {
+          setState(() {
+            _otherUsers.add(Map<String, dynamic>.from(userData));
+            print(_otherUsers);
+          });
+        }
+      },
+    );
 
     final position = await Geolocator.getCurrentPosition();
     if (mounted) {
@@ -100,11 +119,13 @@ class _MapModalServiceState extends State<MapModalService> {
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    _service.stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    print("Rebuilding map! We currently have ${_otherUsers.length} other users.");
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
@@ -128,6 +149,22 @@ class _MapModalServiceState extends State<MapModalService> {
                 style: TextStyle(fontSize: 30),
               ),
             ),
+            ..._otherUsers.map((user) {
+                final double lat = (user['lat'] is num) ? (user['lat'] as num).toDouble() : 0.0;
+                final double lng = (user['lng'] is num) ? (user['lng'] as num).toDouble() : 0.0;
+
+                print("Parsed Lat: $lat, Parsed Lng: $lng");
+
+              return Marker(
+                point: LatLng(lat, lng),
+                width: 40,
+                height: 40,
+                child: const Text(
+                  '🐾',
+                  style: TextStyle(fontSize: 25),
+                ),
+              );
+            })
           ],
         ),
         RichAttributionWidget(
