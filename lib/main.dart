@@ -293,6 +293,12 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  /// user action taken when reviving the cat.
+  Future<void> _payVetBill() async {
+    CatStatsController.instance.revive();
+    debugPrint("[MAIN]: Attempting to pay vet bill...");
+  }
+
   @override
   Widget build(BuildContext context) {
     return AddToCartAnimation(
@@ -314,11 +320,70 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-                  GestureDetector(
-                    onTap: _incrementCounter,
-                    child: Image(
-                        image: AssetImage(_currentCatImage),
-                        width: MediaQuery.of(context).size.width * 0.65),
+                  // listen to changes in CatStatsController
+                  ListenableBuilder(
+                    listenable: CatStatsController.instance,
+                    builder: (context, child) {
+                      final isDead = CatStatsController.instance.health <= 0;
+
+                      /* -- IF CAT IS DEAD, SHOW VET -- */
+                      if (isDead) {
+                        return Container(
+                          width: MediaQuery.of(context).size.width * 0.75,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.redAccent.shade100, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withValues(alpha: 0.1),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.local_hospital_rounded, color: Colors.redAccent, size: 56),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'AT THE VET',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2C1F17),
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: _payVetBill,
+                                icon: const Icon(Icons.payment_rounded, size: 18),
+                                label: const Text('Pay Bill (10,000)'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      /* -- ELSE, SHOW CAT AS NORMAL -- */
+                      return GestureDetector(
+                        onTap: _incrementCounter,
+                        child: Image(
+                            image: AssetImage(_currentCatImage),
+                            width: MediaQuery.of(context).size.width * 0.65),
+                      );
+                    },
                   ),
                 ],
               ),
