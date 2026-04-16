@@ -117,5 +117,14 @@ class StepCurrencyManager {
     totalCoins += coins;
     await saveState();
   }
+
+  /// Manually adds a specific number of steps for testing or rewards.
+  Future<void> simulateSteps(int amount) async {
+    await loadState();
+
+    int simulatedTotalSteps = lastCheckedSteps + amount;
+
+    await processNewSteps(simulatedTotalSteps);
+  }
 }
 

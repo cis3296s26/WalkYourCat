@@ -18,13 +18,49 @@ import 'package:walkyourcat/cat_stats_bar.dart';
 import 'package:walkyourcat/features/challenges/challenges_ui.dart';
 import 'package:walkyourcat/features/map/map_modal.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:features_tour/features_tour.dart';
 
-enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
+enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
 void main() async {
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
+  FeaturesTour.setGlobalConfig(
+    preDialogConfig: PreDialogConfig(
+      enabled: true,
+      customDialogBuilder: (context, _) async {
+        return await showDialog<PreDialogButtonType>(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: const Text('Welcome to Walk Your Cat!'),
+                content: const Text(
+                  'This tour will guide you through the main features of the app.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pop(context, PreDialogButtonType.dismiss),
+                    child: const Text('Dismiss'),
+                  ),
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pop(context, PreDialogButtonType.later),
+                    child: const Text('Later'),
+                  ),
+                  FilledButton(
+                    onPressed: () =>
+                        Navigator.pop(context, PreDialogButtonType.accept),
+                    child: const Text('Start Tour'),
+                  ),
+                ],
+              ),
+            ) ??
+            PreDialogButtonType.later;
+      },
+    ),
+  );
 
+  try {
     if (kIsWeb) {
       // Web implementation of sqlite
       databaseFactory = databaseFactoryFfiWeb;
@@ -81,6 +117,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final tourController = FeaturesTourController('HomePage');
   int _counter = 0;
   SampleItem? _selectedItem;
   final player = AudioPlayer();
@@ -90,12 +127,12 @@ class _MyHomePageState extends State<MyHomePage> {
   final StepCurrencyManager _currencyManager = StepCurrencyManager();
   String _currentCatImage = 'assets/animations/idle_cat.gif';
   late Timer _backgroundUpdateTimer;
-  /*Uncomment 3 methods below to test with a starting balance of 100 coins */
 
   @override
   void initState() {
     super.initState();
     _initializeCoins();
+    tourController.start(context);
     // Update background every minute to check if hour changed
     _backgroundUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
@@ -110,8 +147,16 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  void _update() {
+    setState(() {});
+  }
+
+  void _runTutorial(){
+    tourController.start(context, force: true);
+  }
+
   Future<void> _initializeCoins() async {
-    // Temporary test seed so the shop starts with 100 coins.
+    // Temporary test seed so the shop starts with 300 coins.
     await _currencyManager.setCoinBalance(300);
     await _loadCoins();
   }
@@ -133,6 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     await ChallengesService.instance.addProgress('petting', 1);
+    await StepCurrencyManager().simulateSteps(5);
     await _loadCoins(); // Refresh coins if a challenge was completed
 
     await Future.delayed(const Duration(seconds: 2));
@@ -298,152 +344,121 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
 
             /* ------- STEP & COIN COUNTER WIDGETS --- */
-            Positioned(
-              top: 36,
-              left: 16,
-              child: Row(
-                children: [
-                  StepCounter(
-                    title: 'Steps',
-                    onCoinsUpdated: (newTotal) {
-                      setState(() {
-                        _coins = newTotal;
-                      });
-                    },
-                  ),
+            FeaturesTour(
+              controller: tourController,
+              index: 0,
+              introduce: Text(
+                  "This is the step counter and coin balance! Earn coins by walking with your cat, completing challenges, and picking up coins on the map!"),
+              child: Positioned(
+                top: 36,
+                left: 16,
+                child: Row(
+                  children: [
+                    StepCounter(
+                      title: 'Steps',
+                      onCoinsUpdated: (newTotal) {
+                        setState(() {
+                          _coins = newTotal;
+                        });
+                      },
+                    ),
 
-                  const SizedBox(
-                      width: 8), // Adds a little space between the cards
-                  Card(
-                    color: Colors.amber.shade600,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12.0, vertical: 8.0),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.monetization_on_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$_coins',
-                            style: const TextStyle(
+                    const SizedBox(
+                        width: 8), // Adds a little space between the cards
+                    Card(
+                      color: Colors.amber.shade600,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12.0, vertical: 8.0),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.monetization_on_rounded,
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              size: 18,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              '$_coins',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
             //stats bar
-            Positioned(
-              top: 80, // sits just below the steps + coins row
-              left: 16,
-              child: CatStatsBar(),
-            ),
+            FeaturesTour(
+                controller: tourController,
+                index: 1,
+                introduce: Text(
+                    "This is your cat's stats bar! Hunger, Health, and Happiness. Keep an eye on these to make sure your cat is doing well!"),
+                child: Positioned(
+                  top: 80, // sits just below the steps + coins row
+                  left: 16,
+                  child: CatStatsBar(),
+                )),
 
-            Positioned(
-              top: 36,
-              right: 16,
-              child: PopupMenuButton<SampleItem>(
-                initialValue: _selectedItem,
-                icon: const Icon(Icons.more_vert),
-                itemBuilder: (BuildContext context) =>
-                    <PopupMenuEntry<SampleItem>>[
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionOne,
-                    child: Text('Settings'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionTwo,
-                    child: Text('Profile/Account'),
-                  ),
-                  const PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionThree,
-                    child: Text('Social'),
-                  ),
-                  PopupMenuItem<SampleItem>(
-                    value: SampleItem.optionFour,
-                    onTap: _openAchievements,
-                    child: Text('Achievements'),
-                  ),
-                ],
-              ),
-            ),
-
-            /* ------- FLOATING CHALLENGE BUTTON (bottom-right) --- */
-            Positioned(
-              bottom: 24,
-              left: 90,
-              child: GestureDetector(
-                onTap: _openChallenges,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.deepPurple,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.emoji_events,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+            FeaturesTour(
+              controller: tourController,
+              index: 2,
+              introduce: Text(
+                  "This is the menu button! Here you can access your profile, settings, achievements, social features, and tutorial!"),
+              child: Positioned(
+                top: 36,
+                right: 16,
+                child: PopupMenuButton<SampleItem>(
+                  initialValue: _selectedItem,
+                  icon: const Icon(Icons.more_vert),
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<SampleItem>>[
+                    const PopupMenuItem<SampleItem>(
+                      value: SampleItem.optionOne,
+                      child: Text('Settings'),
+                    ),
+                    const PopupMenuItem<SampleItem>(
+                      value: SampleItem.optionTwo,
+                      child: Text('Profile/Account'),
+                    ),
+                    const PopupMenuItem<SampleItem>(
+                      value: SampleItem.optionThree,
+                      child: Text('Leaderboard'),
+                    ),
+                    PopupMenuItem<SampleItem>(
+                      value: SampleItem.optionFour,
+                      onTap: _openAchievements,
+                      child: Text('Achievements'),
+                    ),
+                    PopupMenuItem<SampleItem>(
+                      value: SampleItem.optionFive,
+                      onTap: _runTutorial,
+                      child: Text('Tutorial'),
+                    )
+                  ],
                 ),
               ),
             ),
 
             /* ------- FLOATING SHOP BUTTON (bottom-right) --- */
-            Positioned(
-              bottom: 24,
-              right: 24,
-              child: GestureDetector(
-                onTap: _openShop,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.deepPurple,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.storefront_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-              ),
-            ),
-
-            /* ------- FLOATING Inventory BUTTON (bottom-left) --- */
-            Positioned(
-              bottom: 24,
-              left: 24,
-              child: GestureDetector(
-                onTap: _openInventory,
-                child: Container(
+            FeaturesTour(
+              controller: tourController,
+              index: 3,
+              introduce: Text(
+                  "This is the shop button! Here you can spend your hard-earned coins on food, toys, and other items to care for your cat!"),
+              child: Positioned(
+                bottom: 24,
+                right: 24,
+                child: GestureDetector(
+                  onTap: _openShop,
+                  child: Container(
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
@@ -451,47 +466,125 @@ class _MyHomePageState extends State<MyHomePage> {
                       color: Colors.deepPurple,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.deepPurple.withOpacity(0.4),
+                          color: Colors.deepPurple.withValues(alpha: 0.4),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: AddToCartIcon(
-                      key: inventoryKey,
-                      icon: const Icon(Icons.inventory, color: Colors.white),
-                      badgeOptions: const BadgeOptions(
-                        active: false,
-                      ),
-                    )),
+                    child: const Icon(
+                      Icons.storefront_rounded,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
               ),
             ),
 
             /* ------- FLOATING Map BUTTON (bottom-right) --- */
-            Positioned(
-              bottom: 24,
-              right: 90,
-              child: GestureDetector(
-                onTap: _openMap,
-                child: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.deepPurple,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.deepPurple.withOpacity(0.4),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
+            FeaturesTour(
+              controller: tourController,
+              index: 4,
+              introduce: Text(
+                  "This is the map button! Here you can view the map of your neighborhood and find places to walk your cat!"),
+              child: Positioned(
+                bottom: 24,
+                right: 90,
+                child: GestureDetector(
+                  onTap: _openMap,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.deepPurple,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.map,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            /* ------- FLOATING CHALLENGE BUTTON (bottom-left) --- */
+            FeaturesTour(
+              controller: tourController,
+              index: 5,
+              introduce: Text(
+                  "This is the challenges button! Here you can view and complete daily challenges to earn rewards!"),
+              child: Positioned(
+                bottom: 24,
+                left: 90,
+                child: GestureDetector(
+                  onTap: _openChallenges,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.deepPurple,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurple.withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.emoji_events,
+                      color: Colors.white,
+                      size: 26,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            /* ------- FLOATING Inventory BUTTON (bottom-left) --- */
+            FeaturesTour(
+              controller: tourController,
+              index: 6,
+              introduce: Text(
+                  "This is the inventory button! Here you can view and use the items you've purchased from the shop!"),
+              onAfterIntroduce: (_) => _update(),
+              child: Positioned(
+                bottom: 24,
+                left: 24,
+                child: GestureDetector(
+                  onTap: _openInventory,
+                  child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.deepPurple,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.map,
-                    color: Colors.white,
-                    size: 26,
-                  ),
+                      child: AddToCartIcon(
+                        key: inventoryKey,
+                        icon: const Icon(Icons.inventory, color: Colors.white),
+                        badgeOptions: const BadgeOptions(
+                          active: false,
+                        ),
+                      )),
                 ),
               ),
             ),
