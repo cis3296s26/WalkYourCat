@@ -23,7 +23,38 @@ import 'package:features_tour/features_tour.dart';
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    if (kIsWeb) {
+      // Web implementation of sqlite
+      databaseFactory = databaseFactoryFfiWeb;
+    } else {
+      if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+      }
+      // Mobile "should" just work
+    }
+
+    const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+    debugPrint('API Key loaded: ${apiKey.isNotEmpty}');
+
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+        appId: String.fromEnvironment('FIREBASE_APP_ID'),
+        messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+        projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+        databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+      ),
+    );
+
+    runApp(const MyApp());
+  } catch (e, stacktrace) {
+    debugPrint('FATAL ERROR: $e');
+    debugPrint('STACKTRACE: $stacktrace');
+  }
+
   FeaturesTour.setGlobalConfig(
     preDialogConfig: PreDialogConfig(
       enabled: true,
@@ -59,37 +90,6 @@ void main() async {
       },
     ),
   );
-
-  try {
-    if (kIsWeb) {
-      // Web implementation of sqlite
-      databaseFactory = databaseFactoryFfiWeb;
-    } else {
-      if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-        sqfliteFfiInit();
-        databaseFactory = databaseFactoryFfi;
-      }
-      // Mobile "should" just work
-    }
-
-    const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-    print('API Key loaded: ${apiKey.isNotEmpty}');
-
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-        appId: String.fromEnvironment('FIREBASE_APP_ID'),
-        messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
-        projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-        databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
-      ),
-    );
-
-    runApp(const MyApp());
-  } catch (e, stacktrace) {
-    print('FATAL ERROR: $e');
-    print('STACKTRACE: $stacktrace');
-  }
 }
 
 class MyApp extends StatelessWidget {
