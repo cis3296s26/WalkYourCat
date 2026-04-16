@@ -28,8 +28,11 @@ jobs:
       - name: Install Dependencies
         run: flutter pub get
 
+      - name: Create Config JSON
+        run: echo '${{ secrets.FIREBASE_CREDENTIALS }}' > config.json
+
       - name: Build APK
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --dart-define-from-file=config.json
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
