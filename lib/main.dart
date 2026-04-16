@@ -26,6 +26,17 @@ void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
+    if (kIsWeb) {
+      // Web implementation of sqlite
+      databaseFactory = databaseFactoryFfiWeb;
+    } else {
+      if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
+        sqfliteFfiInit();
+        databaseFactory = databaseFactoryFfi;
+      }
+      // Mobile "should" just work
+    }
+
     const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
     print('API Key loaded: ${apiKey.isNotEmpty}');
 
