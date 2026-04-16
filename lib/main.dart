@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:walkyourcat/features/achievements/achievements_modal.dart';
@@ -17,24 +18,32 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
 import 'package:walkyourcat/features/challenges/challenges_ui.dart';
 import 'package:walkyourcat/features/map/map_modal.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour }
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
+void main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  if (kIsWeb) {
-    // Web implementation of sqlite
-    databaseFactory = databaseFactoryFfiWeb;
-  } else {
-    if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-      sqfliteFfiInit();
-      databaseFactory = databaseFactoryFfi;
-    }
-    // Mobile "should" just work
+    const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+    print('API Key loaded: ${apiKey.isNotEmpty}');
+
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+        appId: String.fromEnvironment('FIREBASE_APP_ID'),
+        messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+        projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+        databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+      ),
+    );
+
+    runApp(const MyApp());
+  } catch (e, stacktrace) {
+    print('FATAL ERROR: $e');
+    print('STACKTRACE: $stacktrace');
   }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
