@@ -145,6 +145,22 @@ class CatStatsController extends ChangeNotifier {
     await prefs.setDouble(_foodKey, food);
     await prefs.setDouble(_healthKey, health);
   }
+
+  /// Resets all stats to 100. Used for reviving the cat.
+  Future<void> revive() async {
+    debugPrint("[STAT]: REVIVE() WAS CALLED");
+    food = 100.0;
+    health = 100.0;
+    happinessPercent = 1.0;
+
+    notifyListeners(); 
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_foodKey, food);
+    await prefs.setDouble(_healthKey, health);
+    await prefs.setDouble(_happinessKey, happinessPercent);
+    await prefs.setInt(_lastSavedKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(_lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+  }
 }
 
 /* UI Widget */

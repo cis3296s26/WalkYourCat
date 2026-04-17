@@ -50,11 +50,13 @@ void main() async {
       ),
     );
 
-    runApp(const MyApp());
+  
   } catch (e, stacktrace) {
     debugPrint('FATAL ERROR: $e');
     debugPrint('STACKTRACE: $stacktrace');
   }
+
+  runApp(const MyApp());
 
   FeaturesTour.setGlobalConfig(
     preDialogConfig: PreDialogConfig(
@@ -157,8 +159,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _initializeCoins() async {
-    // Temporary test seed so the shop starts with 300 coins.
-    await _currencyManager.setCoinBalance(300);
+    // Temporary test seed so the shop starts with 2500 coins.
+    // await _currencyManager.setCoinBalance(2500);
     await _loadCoins();
   }
 
@@ -317,6 +319,32 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  /// user action taken when reviving the cat.
+  Future<void> _payVetBill() async {
+    debugPrint("[MAIN]: Attempting to pay vet bill...");
+
+    // check for enough coins
+    if (_coins >= 2500) {
+      // Deduct 2,500 coins for vet bill
+      setState(() {
+        _coins -= 2500;
+      });
+
+      // revive cat
+      CatStatsController.instance.revive();
+
+      // update coin balance
+      await _currencyManager.setCoinBalance(_coins);
+      player.play(AssetSource('sounds/purchase.wav'));
+      debugPrint("[MAIN]: Paid vet bill!");
+    }
+    // else, it cannot revive
+    else {
+      showMessage(context, "Not enough coins available for purchase");
+      player.play(AssetSource('sounds/declined.mp3'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AddToCartAnimation(
@@ -338,11 +366,70 @@ class _MyHomePageState extends State<MyHomePage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: <Widget>[
                   SizedBox(height: MediaQuery.of(context).size.height * 0.5),
-                  GestureDetector(
-                    onTap: _incrementCounter,
-                    child: Image(
-                        image: AssetImage(_currentCatImage),
-                        width: MediaQuery.of(context).size.width * 0.65),
+                  // listen to changes in CatStatsController
+                  ListenableBuilder(
+                    listenable: CatStatsController.instance,
+                    builder: (context, child) {
+                      final isDead = CatStatsController.instance.health <= 0;
+
+                      /* -- IF CAT IS DEAD, SHOW VET -- */
+                      if (isDead) {
+                        return Container(
+                          width: MediaQuery.of(context).size.width * 0.75,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.redAccent.shade100, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withValues(alpha: 0.1),
+                                blurRadius: 16,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              const Icon(Icons.local_hospital_rounded, color: Colors.redAccent, size: 56),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'AT THE VET',
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF2C1F17),
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton.icon(
+                                onPressed: _payVetBill,
+                                icon: const Icon(Icons.payment_rounded, size: 18),
+                                label: const Text('Pay Bill (2,500)'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      /* -- ELSE, SHOW CAT AS NORMAL -- */
+                      return GestureDetector(
+                        onTap: _incrementCounter,
+                        child: Image(
+                            image: AssetImage(_currentCatImage),
+                            width: MediaQuery.of(context).size.width * 0.65),
+                      );
+                    },
                   ),
                 ],
               ),
