@@ -1,285 +1,3 @@
-// import 'dart:async';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_map/flutter_map.dart';
-// import 'package:latlong2/latlong.dart';
-// import 'package:geolocator/geolocator.dart';
-
-// void showMapModal(BuildContext context) {
-//   showModalBottomSheet(
-//     context: context,
-//     isScrollControlled: true,
-//     builder: (context) {
-//       return SizedBox(
-//         height: MediaQuery.of(context).size.height * 0.75,
-//         child: const MapModalContent(),
-//       );
-//     },
-//   );
-// }
-
-// class MapModalContent extends StatelessWidget {
-//   const MapModalContent({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Column(
-//       children: [
-//         const SizedBox(height: 10),
-//         Container(
-//           width: 40,
-//           height: 5,
-//           decoration: BoxDecoration(
-//             color: Colors.grey,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//         ),
-//         const SizedBox(height: 10),
-//         const Text(
-//           "Map",
-//           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//         ),
-//         const SizedBox(height: 10),
-//         const Expanded(child: MapModalService()),
-//       ],
-//     );
-//   }
-// }
-
-// class MapModalService extends StatefulWidget {
-//   const MapModalService({super.key});
-
-//   @override
-//   State<MapModalService> createState() => _MapModalServiceState();
-// }
-
-// class _MapModalServiceState extends State<MapModalService> {
-//   LatLng _currentLocation = const LatLng(39.9812, -75.1554);
-//   final MapController _mapController = MapController();
-//   StreamSubscription<Position>? _positionSubscription;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initLocation();
-//   }
-
-//   Future<void> _initLocation() async {
-//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//     if (!serviceEnabled) return;
-
-//     LocationPermission permission = await Geolocator.checkPermission();
-//     if (permission == LocationPermission.denied) {
-//       permission = await Geolocator.requestPermission();
-//       if (permission == LocationPermission.denied) return;
-//     }
-//     if (permission == LocationPermission.deniedForever) return;
-
-//     final position = await Geolocator.getCurrentPosition();
-//     if (mounted) {
-//       setState(() {
-//         _currentLocation = LatLng(position.latitude, position.longitude);
-//       });
-//       _mapController.move(_currentLocation, 17.0);
-//     }
-
-//     _positionSubscription = Geolocator.getPositionStream(
-//       locationSettings: const LocationSettings(
-//         accuracy: LocationAccuracy.high,
-//         distanceFilter: 5,
-//       ),
-//     ).listen((Position position) {
-//       if (mounted) {
-//         setState(() {
-//           _currentLocation = LatLng(position.latitude, position.longitude);
-//         });
-//         _mapController.move(_currentLocation, _mapController.camera.zoom);
-//       }
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _positionSubscription?.cancel();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return FlutterMap(
-//       mapController: _mapController,
-//       options: MapOptions(
-//         initialCenter: _currentLocation,
-//         initialZoom: 17.0,
-//         keepAlive: true,
-//       ),
-//       children: [
-//         TileLayer(
-//           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-//           userAgentPackageName: 'app',
-//         ),
-//         MarkerLayer(
-//           markers: [
-//             Marker(
-//               point: _currentLocation,
-//               width: 40,
-//               height: 40,
-//               child: const Text(
-//                 '🐱',
-//                 style: TextStyle(fontSize: 30),
-//               ),
-//             ),
-//           ],
-//         ),
-//         RichAttributionWidget(
-//           attributions: [
-//             TextSourceAttribution('OpenStreetMap contributors'),
-//           ],
-//         ),
-//       ],
-//     );
-//   }
-// }
-// import 'dart:async';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_map/flutter_map.dart';
-// import 'package:latlong2/latlong.dart';
-// import 'package:geolocator/geolocator.dart';
-
-// void showMapModal(BuildContext context) {
-//   showModalBottomSheet(
-//     context: context,
-//     isScrollControlled: true,
-//     builder: (context) {
-//       return SizedBox(
-//         height: MediaQuery.of(context).size.height * 0.75,
-//         child: const MapModalContent(),
-//       );
-//     },
-//   );
-// }
-
-// class MapModalContent extends StatelessWidget {
-//   const MapModalContent({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Column(
-//       children: [
-//         const SizedBox(height: 10),
-//         Container(
-//           width: 40,
-//           height: 5,
-//           decoration: BoxDecoration(
-//             color: Colors.grey,
-//             borderRadius: BorderRadius.circular(10),
-//           ),
-//         ),
-//         const SizedBox(height: 10),
-//         const Text(
-//           "Map",
-//           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//         ),
-//         const SizedBox(height: 10),
-//         const Expanded(child: MapModalService()),
-//       ],
-//     );
-//   }
-// }
-
-// class MapModalService extends StatefulWidget {
-//   const MapModalService({super.key});
-
-//   @override
-//   State<MapModalService> createState() => _MapModalServiceState();
-// }
-
-// class _MapModalServiceState extends State<MapModalService> {
-//   LatLng _currentLocation = const LatLng(39.9812, -75.1554);
-//   final MapController _mapController = MapController();
-//   StreamSubscription<Position>? _positionSubscription;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initLocation();
-//   }
-
-//   Future<void> _initLocation() async {
-//     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-//     if (!serviceEnabled) return;
-
-//     LocationPermission permission = await Geolocator.checkPermission();
-//     if (permission == LocationPermission.denied) {
-//       permission = await Geolocator.requestPermission();
-//       if (permission == LocationPermission.denied) return;
-//     }
-//     if (permission == LocationPermission.deniedForever) return;
-
-//     final position = await Geolocator.getCurrentPosition();
-//     if (mounted) {
-//       setState(() {
-//         _currentLocation = LatLng(position.latitude, position.longitude);
-//       });
-//       _mapController.move(_currentLocation, 17.0);
-//     }
-
-//     _positionSubscription = Geolocator.getPositionStream(
-//       locationSettings: const LocationSettings(
-//         accuracy: LocationAccuracy.high,
-//         distanceFilter: 5,
-//       ),
-//     ).listen((Position position) {
-//       if (mounted) {
-//         setState(() {
-//           _currentLocation = LatLng(position.latitude, position.longitude);
-//         });
-//         _mapController.move(_currentLocation, _mapController.camera.zoom);
-//       }
-//     });
-//   }
-
-//   @override
-//   void dispose() {
-//     _positionSubscription?.cancel();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return FlutterMap(
-//       mapController: _mapController,
-//       options: MapOptions(
-//         initialCenter: _currentLocation,
-//         initialZoom: 17.0,
-//         keepAlive: true,
-//       ),
-//       children: [
-//         TileLayer(
-//           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-//           userAgentPackageName: 'app',
-//         ),
-//         MarkerLayer(
-//           markers: [
-//             Marker(
-//               point: _currentLocation,
-//               width: 40,
-//               height: 40,
-//               child: const Text(
-//                 '🐱',
-//                 style: TextStyle(fontSize: 30),
-//               ),
-//             ),
-//           ],
-//         ),
-//         RichAttributionWidget(
-//           attributions: [
-//             TextSourceAttribution('OpenStreetMap contributors'),
-//           ],
-//         ),
-//       ],
-//     );
-//   }
-// }
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -296,7 +14,48 @@ import '../inventory/inventory_service.dart';
 // trail can be locked (haven't started), active (currently walking it), or completed
 enum TrailStatus { locked, active, completed }
 
-// one walkable spot nearby — a park, trail
+// the distance filter options the user can pick from — stored as max miles
+// "all" means no cap, just show everything within the 5-mile search radius
+enum DistanceFilter {
+  half,   // ≤ 0.5 mi
+  one,    // ≤ 1 mi
+  two,    // ≤ 2 mi
+  five,   // ≤ 5 mi
+  all,    // no filter, show everything
+}
+
+// helper getters so we can use the enum cleanly everywhere
+extension DistanceFilterX on DistanceFilter {
+  // max perimeter in miles for this filter option (null = no cap)
+  double? get maxMiles {
+    switch (this) {
+      case DistanceFilter.half: return 0.5;
+      case DistanceFilter.one:  return 1.0;
+      case DistanceFilter.two:  return 2.0;
+      case DistanceFilter.five: return 5.0;
+      case DistanceFilter.all:  return null;
+    }
+  }
+
+  // label shown on the filter chips in the UI
+  String get label {
+    switch (this) {
+      case DistanceFilter.half: return '½ mi';
+      case DistanceFilter.one:  return '1 mi';
+      case DistanceFilter.two:  return '2 mi';
+      case DistanceFilter.five: return '5 mi';
+      case DistanceFilter.all:  return 'All';
+    }
+  }
+
+  // returns true if a place with the given perimeter miles passes this filter
+  bool matches(double perimeterMiles) {
+    if (maxMiles == null) return true;
+    return perimeterMiles <= maxMiles!;
+  }
+}
+
+// one walkable spot nearby — a park, trail, whatever
 class NearbyPlace {
   final String id;
   final String name;
@@ -391,14 +150,13 @@ class NearbyPlace {
 }
 
 // handles saving progress to SharedPrefs, resets itself every day at midnight
-// stores completed trail IDs as a comma-joined string under today's date key
 // also saves which shop item was rewarded per trail so reopening restores state without re-awarding
 class _TrailPersistence {
-  static const _kDateKey      = 'trail_date';           // YYYY-MM-DD of current tracking window
-  static const _kIdsKey       = 'trail_completed_ids';  // comma-joined completed trail IDs
-  static const _kRewardPrefix = 'trail_reward_';        // trail_reward_<trailId> -> shop item int id
+  static const _kDateKey      = 'trail_date';
+  static const _kIdsKey       = 'trail_completed_ids';
+  static const _kRewardPrefix = 'trail_reward_';
+  static const _kFilterKey    = 'trail_distance_filter'; // persists the last filter the user picked
 
-  // today's date as YYYY-MM-DD, comparing this is how we know if we need to reset
   static String _today() {
     final now = DateTime.now();
     return '${now.year}-'
@@ -406,18 +164,16 @@ class _TrailPersistence {
         '${now.day.toString().padLeft(2, '0')}';
   }
 
-  // load which trails were completed today
+  // load which trails were completed today — wipes everything if it's a new day
   static Future<Set<String>> loadCompletedToday() async {
     final prefs = await SharedPreferences.getInstance();
     final savedDate = prefs.getString(_kDateKey) ?? '';
 
     if (savedDate != _today()) {
-      //reset all trail progress so you can walk them again
       await prefs.remove(_kIdsKey);
       await prefs.setString(_kDateKey, _today());
       final staleKeys = prefs.getKeys().where((k) => k.startsWith(_kRewardPrefix)).toList();
       for (final k in staleKeys) await prefs.remove(k);
-
       return {};
     }
 
@@ -426,35 +182,43 @@ class _TrailPersistence {
     return raw.split(',').toSet();
   }
 
-  // mark a trail as done + optionally save which item dropped, calling this twice is fine
+  // mark a trail as done + optionally save which item dropped
   static Future<void> markCompleted(String trailId, {int? rewardItemId}) async {
     final prefs = await SharedPreferences.getInstance();
-
-    // make sure the date key is set so tomorrow's load knows to reset
     await prefs.setString(_kDateKey, _today());
 
-    // append this trail to the completed set
     final raw     = prefs.getString(_kIdsKey) ?? '';
     final current = raw.isEmpty ? <String>{} : raw.split(',').toSet();
     current.add(trailId);
     await prefs.setString(_kIdsKey, current.join(','));
 
-    // save the reward item ID so we can restore it next time the app opens
     if (rewardItemId != null) {
       await prefs.setInt('$_kRewardPrefix$trailId', rewardItemId);
     }
   }
 
-  // look up the saved shop item ID for a trail, returns null if nothing was saved
   static Future<int?> getRewardItemId(String trailId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.containsKey('$_kRewardPrefix$trailId')
         ? prefs.getInt('$_kRewardPrefix$trailId')
         : null;
   }
+
+  // save which filter the user last used so it persists across app opens
+  static Future<void> saveFilter(DistanceFilter filter) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_kFilterKey, filter.index);
+  }
+
+  // load the last filter, default to "All" if nothing saved yet
+  static Future<DistanceFilter> loadFilter() async {
+    final prefs = await SharedPreferences.getInstance();
+    final idx = prefs.getInt(_kFilterKey);
+    if (idx == null || idx >= DistanceFilter.values.length) return DistanceFilter.all;
+    return DistanceFilter.values[idx];
+  }
 }
 
-// these are the Overpass API mirrors — we try them in order in case one is slow or down
 const _overpassEndpoints = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -462,13 +226,13 @@ const _overpassEndpoints = [
 ];
 
 // fetches everything walkable near us from OpenStreetMap via Overpass
-// no minimum distance filter — we want to show ALL the options near us
+// we fetch ALL places up front and let the filter chip do the client-side filtering
+// this way switching filters is instant with no extra network calls
 Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
-  const double radiusMeters = 8000; // ~5 miles radius, big enough to have options
+  const double radiusMeters = 8000; // ~5 miles radius
   final lat = center.latitude;
   final lon = center.longitude;
 
-  // querying parks, nature reserves, named footpaths, trails, cycleways, and hiking routes
   final query =
       '[out:json][timeout:25];'
       '('
@@ -476,7 +240,7 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
       'way["highway"~"^(path|footway|cycleway|track)\$"]["name"](around:$radiusMeters,$lat,$lon);'
       'way["route"="hiking"](around:$radiusMeters,$lat,$lon);'
       ');'
-      'out geom qt 200;'; // bumped to 200 so we actually get everything nearby
+      'out geom qt 200;';
 
   http.Response? response;
   for (final endpoint in _overpassEndpoints) {
@@ -494,7 +258,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
         debugPrint('[map] got a response from $endpoint, let\'s gooo');
         break;
       }
-      debugPrint('[map] bad status ${response.statusCode} from $endpoint');
     } catch (e) {
       debugPrint('[map] $endpoint threw: $e');
       response = null;
@@ -517,7 +280,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   final elements = (data['elements'] as List<dynamic>?) ?? [];
   debugPrint('[map] got ${elements.length} raw elements from overpass');
 
-  // rotate through colors so each place looks distinct on the map
   const colors = [
     Color(0xFF2ECC71), Color(0xFF3498DB), Color(0xFFE67E22),
     Color(0xFF9B59B6), Color(0xFFE74C3C), Color(0xFF1ABC9C),
@@ -531,7 +293,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   const Distance distCalc = Distance();
 
   for (final el in elements) {
-    // we only queried ways but just double checking in case something weird slips in
     if ((el['type'] as String? ?? '') != 'way') continue;
 
     final String elId = 'way-${el['id']}';
@@ -560,7 +321,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
       else continue;
     }
 
-    // figure out what kind of place this is
     final leisure = tags['leisure'] as String?;
     final highway = tags['highway'] as String?;
     final route   = tags['route']   as String?;
@@ -570,10 +330,8 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     String typeLabel = 'park';
     if (route   != null) typeLabel = 'trail';
     if (highway != null) typeLabel = 'path';
-    // green space tags always win the type label battle
     if (leisure != null || natural != null || landuse != null) typeLabel = 'park';
 
-    // parse the actual GPS points from the geometry
     final rawGeom = el['geometry'] as List<dynamic>? ?? [];
     final List<LatLng> boundary = rawGeom
         .map<LatLng?>((g) {
@@ -587,20 +345,16 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 
     if (boundary.isEmpty) continue;
 
-    // measure the actual walking distance — skip anything under 0.1 miles
-    // we want to show short paths too, not just huge loops
     double totalMeters = 0;
     for (int i = 0; i < boundary.length - 1; i++) {
       totalMeters += distCalc.as(LengthUnit.Meter, boundary[i], boundary[i + 1]);
     }
-    if (totalMeters < 160) continue; // ~0.1 mile minimum, tiny dead ends aren't useful
+    if (totalMeters < 160) continue; // ~0.1 mile minimum, skip tiny dead ends
 
-    // centroid = average of all boundary points
     final avgLat = boundary.map((p) => p.latitude).reduce((a, b) => a + b)  / boundary.length;
     final avgLon = boundary.map((p) => p.longitude).reduce((a, b) => a + b) / boundary.length;
     final placeCenter = LatLng(avgLat, avgLon);
 
-    // if the centroid ended up way outside our radius, skip it
     if (distCalc.as(LengthUnit.Meter, center, placeCenter) > radiusMeters * 1.2) continue;
 
     seenIds.add(elId);
@@ -614,9 +368,8 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     if (places.length >= 150) break;
   }
 
-  debugPrint('[map] ${places.length} places found (≥0.1 mi, within ~5 miles)');
+  debugPrint('[map] ${places.length} places found, ready to filter client-side');
 
-  // sort nearest-first so the bottom cards are actually useful
   places.sort((a, b) => distCalc
       .as(LengthUnit.Meter, center, a.center)
       .compareTo(distCalc.as(LengthUnit.Meter, center, b.center)));
@@ -627,7 +380,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 String _capitalize(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-// maps shop item tags to emojis — these have to match what shop_item.dart uses exactly
 String _tagEmoji(String tag) {
   switch (tag) {
     case 'food':     return '🍞';
@@ -639,7 +391,6 @@ String _tagEmoji(String tag) {
   }
 }
 
-// opens the map as a bottom sheet modal
 void showMapModal(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -652,7 +403,6 @@ void showMapModal(BuildContext context) {
   );
 }
 
-// outer shell with the drag handle, title bar, then the map below it
 class MapModalContent extends StatelessWidget {
   const MapModalContent({super.key});
 
@@ -696,7 +446,7 @@ class _DragHandle extends StatelessWidget {
   }
 }
 
-// main stateful widget that handles location, data fetching, and the reward flow
+// main stateful widget that handles location, data fetching, filter state, and rewards
 class MapModalService extends StatefulWidget {
   const MapModalService({super.key});
 
@@ -707,17 +457,20 @@ class MapModalService extends StatefulWidget {
 class _MapModalServiceState extends State<MapModalService>
     with TickerProviderStateMixin {
 
-  // defaulting to philly until GPS actually fires
   LatLng _currentLocation = const LatLng(39.9812, -75.1554);
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionSubscription;
 
-  List<NearbyPlace> _places    = [];
-  List<ShopItem>    _shopItems = [];
+  List<NearbyPlace> _allPlaces      = []; // full unfiltered list from Overpass
+  List<NearbyPlace> _filteredPlaces = []; // what actually shows on the map
+  List<ShopItem>    _shopItems      = [];
+
   bool   _loading    = true;
   String _loadingMsg = 'Getting your location…';
 
-  // controls whether the reward pop-up is showing and what it says
+  // the currently selected distance filter — defaults to All, loaded from prefs
+  DistanceFilter _activeFilter = DistanceFilter.all;
+
   bool      _showReward      = false;
   ShopItem? _rewardItem;
   String    _rewardPlaceName = '';
@@ -733,7 +486,6 @@ class _MapModalServiceState extends State<MapModalService>
     _initApp();
   }
 
-  // bounces in with elastic curve, fades out toward the end like a nice lil popup
   void _setupRewardAnimation() {
     _rewardAnim = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1800));
@@ -746,7 +498,9 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   Future<void> _initApp() async {
-    // load shop items first so reward assignment is ready right after places load
+    // load the saved filter before anything else so the UI is ready when places load
+    _activeFilter = await _TrailPersistence.loadFilter();
+
     try {
       _shopItems = await ShopService.loadShopAssets();
     } catch (e) {
@@ -756,10 +510,24 @@ class _MapModalServiceState extends State<MapModalService>
     await _initLocation();
   }
 
-  // assigns rewards based on walking distance tier, all items come from shop_item.dart
-  //   0.1–2 mi  → food / drinks   (easy walk, grab a snack)
-  //   2–4 mi    → medicine / fun  (decent effort, decent drop)
-  //   4+ mi     → cosmetic        (big walk, rare item, treat yourself)
+  // applies the active distance filter to _allPlaces and updates _filteredPlaces
+  // this is pure client-side, no network call needed — super fast
+  void _applyFilter() {
+    setState(() {
+      _filteredPlaces = _allPlaces
+          .where((p) => _activeFilter.matches(p.perimeterMiles))
+          .toList();
+    });
+  }
+
+  // called when user taps a filter chip — saves to prefs and re-filters
+  void _setFilter(DistanceFilter filter) {
+    if (_activeFilter == filter) return; // already selected, nothing to do
+    setState(() => _activeFilter = filter);
+    _TrailPersistence.saveFilter(filter); // fire and forget is fine here
+    _applyFilter();
+  }
+
   void _assignRewards() {
     if (_shopItems.isEmpty) return;
 
@@ -767,17 +535,14 @@ class _MapModalServiceState extends State<MapModalService>
     final tier1 = _shopItems.where((i) => i.tag == 'medicine' || i.tag == 'fun').toList();
     final tier2 = _shopItems.where((i) => i.tag == 'cosmetic').toList();
 
-    for (final place in _places) {
+    for (final place in _allPlaces) {
       final miles = place.perimeterMiles;
-
-      // fall back up the tier chain if a tier happens to be empty
       List<ShopItem> pool;
       if      (miles >= 4.0 && tier2.isNotEmpty) pool = tier2;
       else if (miles >= 2.0 && tier1.isNotEmpty) pool = tier1;
       else if (tier0.isNotEmpty)                 pool = tier0;
-      else                                       pool = _shopItems; // just use everything if tiers are empty
+      else                                       pool = _shopItems;
 
-      // deterministic hash so same trail always gives same item each day, no randomness
       place.rewardItem = pool[place.id.hashCode.abs() % pool.length];
     }
   }
@@ -802,7 +567,6 @@ class _MapModalServiceState extends State<MapModalService>
       return;
     }
 
-    // one-shot fix to get the map moving before Overpass responds
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
@@ -814,24 +578,19 @@ class _MapModalServiceState extends State<MapModalService>
     });
     _mapController.move(_currentLocation, 14.0);
 
-    // hit overpass API
     final places = await fetchNearbyPlaces(_currentLocation);
     if (!mounted) return;
 
-    _places = places;
+    _allPlaces = places;
     _assignRewards();
 
     // restore completed state from SharedPrefs
-    // this is key — on reopen we restore which trails were done today and which item
-    // was collected, so it looks right without accidentally re-awarding inventory items
     final completedIds = await _TrailPersistence.loadCompletedToday();
-    for (final place in _places) {
+    for (final place in _allPlaces) {
       if (!completedIds.contains(place.id)) continue;
-
       place.status        = TrailStatus.completed;
       place.walkedFraction = 1.0;
 
-      // if the reward wasn't assigned above somehow, restore it from prefs
       if (place.rewardItem == null && _shopItems.isNotEmpty) {
         final savedId = await _TrailPersistence.getRewardItemId(place.id);
         if (savedId != null) {
@@ -843,10 +602,10 @@ class _MapModalServiceState extends State<MapModalService>
       }
     }
 
+    // apply the filter now that we have all the places
+    _applyFilter();
     setState(() => _loading = false);
 
-    // start streaming GPS updates for walk tracking
-    // distanceFilter: 5 means only fires when user moves 5+ meters, saves battery
     _positionSubscription = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
@@ -855,7 +614,6 @@ class _MapModalServiceState extends State<MapModalService>
     ).listen(_onPosition);
   }
 
-  // fires on every GPS update — checks if any trail just got completed
   void _onPosition(Position pos) {
     if (!mounted) return;
     final loc = LatLng(pos.latitude, pos.longitude);
@@ -863,29 +621,26 @@ class _MapModalServiceState extends State<MapModalService>
     setState(() => _currentLocation = loc);
     _mapController.move(loc, _mapController.camera.zoom);
 
-    for (final place in _places) {
+    // check all places, not just filtered ones — user might walk into a filtered-out trail
+    for (final place in _allPlaces) {
       final prevStatus = place.status;
       place.checkUserPosition(loc);
 
-      // if this GPS update flipped a trail to completed, time to hand out the loot
       if (place.status == TrailStatus.completed &&
           prevStatus != TrailStatus.completed) {
         _awardItem(place);
       }
     }
 
-    setState(() {}); // re-render so progress bars update
+    setState(() {});
   }
 
-  // saves completion to prefs, adds item to inventory, shows the popup
   Future<void> _awardItem(NearbyPlace place) async {
-    // persist so next app open shows this trail as done
     await _TrailPersistence.markCompleted(
       place.id,
       rewardItemId: place.rewardItem?.id,
     );
 
-    // same addItem call as the shop, goes straight to inventory
     if (place.rewardItem != null) {
       await InventoryService.instance.addItem(place.rewardItem!);
     }
@@ -897,13 +652,11 @@ class _MapModalServiceState extends State<MapModalService>
       _showReward      = true;
     });
 
-    // run the animation then hide the popup
     _rewardAnim.forward(from: 0).then((_) {
       if (mounted) setState(() => _showReward = false);
     });
   }
 
-  // manual complete button from the detail sheet — same flow as GPS auto-complete
   void _manualComplete(NearbyPlace place) {
     if (place.status == TrailStatus.completed) return;
     setState(() {
@@ -940,7 +693,7 @@ class _MapModalServiceState extends State<MapModalService>
     return Stack(
       children: [
 
-        // the actual map — OpenStreetMap tiles with polylines and markers on top
+        // the actual map
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
@@ -954,10 +707,10 @@ class _MapModalServiceState extends State<MapModalService>
               userAgentPackageName: 'app',
             ),
 
-            // colored outlines for each nearby place
-            if (_places.isNotEmpty)
+            // only show polylines for filtered places
+            if (_filteredPlaces.isNotEmpty)
               PolylineLayer(
-                polylines: _places
+                polylines: _filteredPlaces
                     .where((p) => p.boundary.length > 1)
                     .map<Polyline>((p) => Polyline(
                           points: p.boundary,
@@ -968,10 +721,10 @@ class _MapModalServiceState extends State<MapModalService>
                     .toList(),
               ),
 
-            // floating name + reward labels over each place
-            if (_places.isNotEmpty)
+            // only show labels for filtered places
+            if (_filteredPlaces.isNotEmpty)
               MarkerLayer(
-                markers: _places
+                markers: _filteredPlaces
                     .map((p) => Marker(
                           point: p.center,
                           width: 140, height: 52,
@@ -997,7 +750,7 @@ class _MapModalServiceState extends State<MapModalService>
           ],
         ),
 
-        // loading overlay while we wait for GPS + Overpass
+        // loading overlay
         if (_loading)
           Container(
             color: const Color(0xFF0F1923).withOpacity(0.85),
@@ -1018,10 +771,42 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // empty state when Overpass comes back with nothing
-        if (!_loading && _places.isEmpty)
+        // filter chips row — always visible once loading is done
+        // sits at the top so it doesn't get buried by the map controls
+        if (!_loading)
           Positioned(
-            top: 16, left: 16, right: 16,
+            top: 12, left: 56, right: 12,
+            child: _DistanceFilterBar(
+              active: _activeFilter,
+              totalCount: _allPlaces.length,
+              filteredCount: _filteredPlaces.length,
+              onSelect: _setFilter,
+            ),
+          ),
+
+        // empty state — shown when filter is too tight and nothing passes
+        if (!_loading && _filteredPlaces.isEmpty && _allPlaces.isNotEmpty)
+          Positioned(
+            top: 70, left: 16, right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A2535).withOpacity(0.97),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Text(
+                'No ${_activeFilter.label} trails nearby — try a wider filter!',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+
+        // empty state — shown when Overpass came back with nothing at all
+        if (!_loading && _allPlaces.isEmpty)
+          Positioned(
+            top: 70, left: 16, right: 16,
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -1041,8 +826,9 @@ class _MapModalServiceState extends State<MapModalService>
                       setState(() { _loading = true; _loadingMsg = 'Retrying…'; });
                       fetchNearbyPlaces(_currentLocation).then((places) {
                         if (!mounted) return;
-                        _places = places;
+                        _allPlaces = places;
                         _assignRewards();
+                        _applyFilter();
                         setState(() => _loading = false);
                       });
                     },
@@ -1080,12 +866,12 @@ class _MapModalServiceState extends State<MapModalService>
           ),
         ),
 
-        // horizontal scrollable cards at the bottom
-        if (!_loading && _places.isNotEmpty)
+        // bottom scrollable place cards — only filtered places
+        if (!_loading && _filteredPlaces.isNotEmpty)
           Positioned(
             bottom: 12, left: 0, right: 0,
             child: _PlaceLegend(
-              places: _places,
+              places: _filteredPlaces,
               onTap: (p) {
                 _mapController.move(p.center, 15.5);
                 _showPlaceDetail(p);
@@ -1093,7 +879,7 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // reward popup after completing a trail
+        // reward popup
         if (_showReward)
           Center(
             child: AnimatedBuilder(
@@ -1115,6 +901,106 @@ class _MapModalServiceState extends State<MapModalService>
   }
 }
 
+// the filter bar with distance chip options — lives at the top of the map
+// shows the count of visible places next to the active chip so users know what changed
+class _DistanceFilterBar extends StatelessWidget {
+  final DistanceFilter active;
+  final int totalCount;
+  final int filteredCount;
+  final void Function(DistanceFilter) onSelect;
+
+  const _DistanceFilterBar({
+    required this.active,
+    required this.totalCount,
+    required this.filteredCount,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1923).withOpacity(0.93),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('📏', style: TextStyle(fontSize: 12)),
+          const SizedBox(width: 4),
+          ...DistanceFilter.values.map((filter) => Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: _FilterChip(
+              label: filter.label,
+              isActive: filter == active,
+              onTap: () => onSelect(filter),
+            ),
+          )),
+          // lil count badge so users see how many places match
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$filteredCount',
+              style: const TextStyle(
+                color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// individual filter chip — green when active, muted when not
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isActive
+              ? const Color(0xFF2ECC71).withOpacity(0.2)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? const Color(0xFF2ECC71) : Colors.white24,
+            width: isActive ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? const Color(0xFF2ECC71) : Colors.white54,
+            fontSize: 11,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // floating label on the map showing the place name + reward preview
 class _PlaceLabel extends StatelessWidget {
   final NearbyPlace place;
@@ -1128,7 +1014,6 @@ class _PlaceLabel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // name pill
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
           decoration: BoxDecoration(
@@ -1157,7 +1042,6 @@ class _PlaceLabel extends StatelessWidget {
 
         const SizedBox(height: 3),
 
-        // reward preview below the name pill using shop tag emojis
         if (!isComplete && place.rewardItem != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
@@ -1250,7 +1134,6 @@ class _PlaceCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
 
-          // place name with color dot
           Row(
             children: [
               Container(width: 8, height: 8,
@@ -1265,7 +1148,6 @@ class _PlaceCard extends StatelessWidget {
             ],
           ),
 
-          // type label and distance
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1277,7 +1159,6 @@ class _PlaceCard extends StatelessWidget {
             ],
           ),
 
-          // progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -1289,7 +1170,6 @@ class _PlaceCard extends StatelessWidget {
             ),
           ),
 
-          // status + reward name
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1352,7 +1232,6 @@ class _PlaceDetailSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // header row with name and done badge
           Row(
             children: [
               Container(width: 12, height: 12,
@@ -1383,7 +1262,6 @@ class _PlaceDetailSheet extends StatelessWidget {
                   fontSize: 11, letterSpacing: 1.2)),
           const SizedBox(height: 20),
 
-          // stat chips — time, steps, distance
           Row(
             children: [
               _StatChip(
@@ -1411,7 +1289,6 @@ class _PlaceDetailSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // progress bar only shows when actively walking
           if (!isComplete && place.status == TrailStatus.active) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1436,7 +1313,6 @@ class _PlaceDetailSheet extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // reward preview using shop item name + tag emoji
           if (reward != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1475,7 +1351,6 @@ class _PlaceDetailSheet extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // done state vs the "I completed this!" button
           if (isComplete)
             Container(
               width: double.infinity,
@@ -1530,7 +1405,6 @@ class _PlaceDetailSheet extends StatelessWidget {
   }
 }
 
-// time / steps / distance stat boxes in the detail sheet
 class _StatChip extends StatelessWidget {
   final String icon;
   final String label;
@@ -1567,7 +1441,7 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// popup that bounces in right after completing a trail, shows the item you got
+// popup that bounces in right after completing a trail
 class _RewardBurst extends StatelessWidget {
   final ShopItem? item;
   final String placeName;
@@ -1592,7 +1466,7 @@ class _RewardBurst extends StatelessWidget {
         children: [
           const Text('🐱', style: TextStyle(fontSize: 52)),
           const SizedBox(height: 8),
-          const Text('Trail Complete!',
+          const Text('Got some steps in 🚶',
               style: TextStyle(color: Colors.white,
                   fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
@@ -1601,7 +1475,6 @@ class _RewardBurst extends StatelessWidget {
               textAlign: TextAlign.center),
           const SizedBox(height: 14),
 
-          // shows which shop item dropped — emoji from _tagEmoji, name from ShopItem
           if (item != null) ...[
             Row(
               mainAxisSize: MainAxisSize.min,
@@ -1623,7 +1496,7 @@ class _RewardBurst extends StatelessWidget {
             const SizedBox(height: 10),
           ],
 
-          const Text('Trail complete.',
+          const Text('Got some steps in 🚶',
               style: TextStyle(color: Colors.white38, fontSize: 12)),
         ],
       ),
