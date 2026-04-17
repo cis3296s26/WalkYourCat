@@ -35,6 +35,9 @@ jobs:
     #     # Generates the sqlite3.wasm and service worker files needed for local DB
     #     run: dart run sqflite_common_ffi_web:setup
 
+      - name: Create Config JSON
+        run: echo '${{ secrets.FIREBASE_CREDENTIALS }}' > config.json
+
       - name: Build Web
         run: flutter build web --release --base-href "/WalkYourCat/"
 
