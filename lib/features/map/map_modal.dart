@@ -10,6 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';
 import '../inventory/inventory_service.dart';
+import 'map_db_service.dart';
+
+final _service = LocationDbService();
 
 // trail can be locked (haven't started), active (currently walking it), or completed
 enum TrailStatus { locked, active, completed }
@@ -17,54 +20,58 @@ enum TrailStatus { locked, active, completed }
 // the distance filter options the user can pick from — stored as max miles
 // "all" means no cap, just show everything within the 5-mile search radius
 enum DistanceFilter {
-  half,   // ≤ 0.5 mi
-  one,    // ≤ 1 mi
-  two,    // ≤ 2 mi
-  five,   // ≤ 5 mi
-  all,    // no filter, show everything
+  half,
+  one,
+  two,
+  five,
+  all,
 }
 
-// helper getters so we can use the enum cleanly everywhere
 extension DistanceFilterX on DistanceFilter {
-  // max perimeter in miles for this filter option (null = no cap)
   double? get maxMiles {
     switch (this) {
-      case DistanceFilter.half: return 0.5;
-      case DistanceFilter.one:  return 1.0;
-      case DistanceFilter.two:  return 2.0;
-      case DistanceFilter.five: return 5.0;
-      case DistanceFilter.all:  return null;
+      case DistanceFilter.half:
+        return 0.5;
+      case DistanceFilter.one:
+        return 1.0;
+      case DistanceFilter.two:
+        return 2.0;
+      case DistanceFilter.five:
+        return 5.0;
+      case DistanceFilter.all:
+        return null;
     }
   }
 
-  // label shown on the filter chips in the UI
   String get label {
     switch (this) {
-      case DistanceFilter.half: return '½ mi';
-      case DistanceFilter.one:  return '1 mi';
-      case DistanceFilter.two:  return '2 mi';
-      case DistanceFilter.five: return '5 mi';
-      case DistanceFilter.all:  return 'All';
+      case DistanceFilter.half:
+        return '½ mi';
+      case DistanceFilter.one:
+        return '1 mi';
+      case DistanceFilter.two:
+        return '2 mi';
+      case DistanceFilter.five:
+        return '5 mi';
+      case DistanceFilter.all:
+        return 'All';
     }
   }
 
-  // returns true if a place with the given perimeter miles passes this filter
   bool matches(double perimeterMiles) {
     if (maxMiles == null) return true;
     return perimeterMiles <= maxMiles!;
   }
 }
 
-// one walkable spot nearby — a park, trail, whatever
 class NearbyPlace {
   final String id;
   final String name;
-  final String type;           // 'park' | 'trail' | 'path'
+  final String type;
   final LatLng center;
-  final List<LatLng> boundary; // the actual OSM shape
+  final List<LatLng> boundary;
   final Color color;
 
-  // reward gets set by the shop after we load, don't set it yourself
   ShopItem? rewardItem;
 
   TrailStatus status;
@@ -84,7 +91,6 @@ class NearbyPlace {
     this.walkedFraction = 0.0,
   });
 
-  // total walkable length of this path in meters, adds up all the little segments
   double get perimeterMeters {
     if (boundary.length < 2) return 0;
     const Distance d = Distance();
@@ -97,10 +103,8 @@ class NearbyPlace {
 
   double get perimeterMiles => perimeterMeters / 1609.344;
 
-  // rough walking time assuming avg person walks about 80 meters per minute
   int get estimatedMinutes => (perimeterMeters / 80).ceil().clamp(1, 999);
 
-  // rough step count based on ~2112 steps per mile
   int get estimatedSteps => (perimeterMiles * 2112).round().clamp(100, 999999);
 
   String get distanceLabel {
@@ -109,19 +113,17 @@ class NearbyPlace {
     return '${(miles * 5280).round()} ft';
   }
 
-  // called every GPS update — marks segments near us as visited, checks if we're done
   void checkUserPosition(LatLng userPos) {
     if (status == TrailStatus.completed || boundary.isEmpty) return;
 
     const Distance dist = Distance();
 
-    // if we're within 40m of a segment's midpoint, count it as walked
     for (int i = 0; i < boundary.length - 1; i++) {
       final segId = '$id-seg-$i';
       if (_visitedSegments.contains(segId)) continue;
 
       final segMid = LatLng(
-        (boundary[i].latitude  + boundary[i + 1].latitude)  / 2,
+        (boundary[i].latitude + boundary[i + 1].latitude) / 2,
         (boundary[i].longitude + boundary[i + 1].longitude) / 2,
       );
       if (dist.as(LengthUnit.Meter, userPos, segMid) < 40) {
@@ -129,19 +131,16 @@ class NearbyPlace {
       }
     }
 
-    // also count the center so parks register even if we don't walk the whole boundary
     final dCenter = dist.as(LengthUnit.Meter, userPos, center);
     if (dCenter < 60) _visitedSegments.add('$id-center');
 
     final totalPossible = boundary.length > 1 ? boundary.length - 1 : 1;
     walkedFraction = (_visitedSegments.length / totalPossible).clamp(0.0, 1.0);
 
-    // flip to active once the user enters the area or starts walking any segment
     if (status == TrailStatus.locked && (walkedFraction > 0 || dCenter < 200)) {
       status = TrailStatus.active;
     }
 
-    // 70% coverage is good enough, nobody walks every single GPS node lol
     if (walkedFraction >= 0.7 && status == TrailStatus.active) {
       status = TrailStatus.completed;
       walkedFraction = 1.0;
@@ -149,13 +148,11 @@ class NearbyPlace {
   }
 }
 
-// handles saving progress to SharedPrefs, resets itself every day at midnight
-// also saves which shop item was rewarded per trail so reopening restores state without re-awarding
 class _TrailPersistence {
-  static const _kDateKey      = 'trail_date';
-  static const _kIdsKey       = 'trail_completed_ids';
+  static const _kDateKey = 'trail_date';
+  static const _kIdsKey = 'trail_completed_ids';
   static const _kRewardPrefix = 'trail_reward_';
-  static const _kFilterKey    = 'trail_distance_filter'; // persists the last filter the user picked
+  static const _kFilterKey = 'trail_distance_filter';
 
   static String _today() {
     final now = DateTime.now();
@@ -164,7 +161,6 @@ class _TrailPersistence {
         '${now.day.toString().padLeft(2, '0')}';
   }
 
-  // load which trails were completed today — wipes everything if it's a new day
   static Future<Set<String>> loadCompletedToday() async {
     final prefs = await SharedPreferences.getInstance();
     final savedDate = prefs.getString(_kDateKey) ?? '';
@@ -172,8 +168,11 @@ class _TrailPersistence {
     if (savedDate != _today()) {
       await prefs.remove(_kIdsKey);
       await prefs.setString(_kDateKey, _today());
-      final staleKeys = prefs.getKeys().where((k) => k.startsWith(_kRewardPrefix)).toList();
-      for (final k in staleKeys) await prefs.remove(k);
+      final staleKeys =
+          prefs.getKeys().where((k) => k.startsWith(_kRewardPrefix)).toList();
+      for (final k in staleKeys) {
+        await prefs.remove(k);
+      }
       return {};
     }
 
@@ -182,12 +181,11 @@ class _TrailPersistence {
     return raw.split(',').toSet();
   }
 
-  // mark a trail as done + optionally save which item dropped
   static Future<void> markCompleted(String trailId, {int? rewardItemId}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kDateKey, _today());
 
-    final raw     = prefs.getString(_kIdsKey) ?? '';
+    final raw = prefs.getString(_kIdsKey) ?? '';
     final current = raw.isEmpty ? <String>{} : raw.split(',').toSet();
     current.add(trailId);
     await prefs.setString(_kIdsKey, current.join(','));
@@ -204,17 +202,16 @@ class _TrailPersistence {
         : null;
   }
 
-  // save which filter the user last used so it persists across app opens
   static Future<void> saveFilter(DistanceFilter filter) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_kFilterKey, filter.index);
   }
 
-  // load the last filter, default to "All" if nothing saved yet
   static Future<DistanceFilter> loadFilter() async {
     final prefs = await SharedPreferences.getInstance();
     final idx = prefs.getInt(_kFilterKey);
-    if (idx == null || idx >= DistanceFilter.values.length) return DistanceFilter.all;
+    if (idx == null || idx >= DistanceFilter.values.length)
+      return DistanceFilter.all;
     return DistanceFilter.values[idx];
   }
 }
@@ -225,16 +222,12 @@ const _overpassEndpoints = [
   'https://overpass.openstreetmap.ru/api/interpreter',
 ];
 
-// fetches everything walkable near us from OpenStreetMap via Overpass
-// we fetch ALL places up front and let the filter chip do the client-side filtering
-// this way switching filters is instant with no extra network calls
 Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
-  const double radiusMeters = 8000; // ~5 miles radius
+  const double radiusMeters = 8000;
   final lat = center.latitude;
   final lon = center.longitude;
 
-  final query =
-      '[out:json][timeout:25];'
+  final query = '[out:json][timeout:25];'
       '('
       'way["leisure"~"^(park|nature_reserve|recreation_ground)\$"](around:$radiusMeters,$lat,$lon);'
       'way["highway"~"^(path|footway|cycleway|track)\$"]["name"](around:$radiusMeters,$lat,$lon);'
@@ -246,16 +239,14 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   for (final endpoint in _overpassEndpoints) {
     try {
       debugPrint('[map] trying $endpoint');
-      response = await http
-          .post(
-            Uri.parse(endpoint),
-            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-            body: {'data': query},
-          )
-          .timeout(const Duration(seconds: 30));
+      response = await http.post(
+        Uri.parse(endpoint),
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: {'data': query},
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode == 200 && response.body.startsWith('{')) {
-        debugPrint('[map] got a response from $endpoint, let\'s gooo');
+        debugPrint('[map] got a response from $endpoint');
         break;
       }
     } catch (e) {
@@ -265,7 +256,7 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   }
 
   if (response == null || response.statusCode != 200) {
-    debugPrint('[map] all endpoints failed rip');
+    debugPrint('[map] all endpoints failed');
     return [];
   }
 
@@ -278,12 +269,17 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   }
 
   final elements = (data['elements'] as List<dynamic>?) ?? [];
-  debugPrint('[map] got ${elements.length} raw elements from overpass');
 
   const colors = [
-    Color(0xFF2ECC71), Color(0xFF3498DB), Color(0xFFE67E22),
-    Color(0xFF9B59B6), Color(0xFFE74C3C), Color(0xFF1ABC9C),
-    Color(0xFFF39C12), Color(0xFF27AE60), Color(0xFF8E44AD),
+    Color(0xFF2ECC71),
+    Color(0xFF3498DB),
+    Color(0xFFE67E22),
+    Color(0xFF9B59B6),
+    Color(0xFFE74C3C),
+    Color(0xFF1ABC9C),
+    Color(0xFFF39C12),
+    Color(0xFF27AE60),
+    Color(0xFF8E44AD),
     Color(0xFFD35400),
   ];
 
@@ -300,37 +296,43 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 
     final tags = (el['tags'] as Map<String, dynamic>?) ?? {};
 
-    String name =
-        tags['name:en']       as String? ??
+    String name = tags['name:en'] as String? ??
         tags['official_name'] as String? ??
-        tags['name']          as String? ??
-        tags['ref']           as String? ??
+        tags['name'] as String? ??
+        tags['ref'] as String? ??
         '';
 
     if (name.isEmpty) {
       final leisure = tags['leisure'] as String?;
       final highway = tags['highway'] as String?;
-      final route   = tags['route']   as String?;
+      final route = tags['route'] as String?;
       final natural = tags['natural'] as String?;
       final landuse = tags['landuse'] as String?;
 
-      if      (leisure != null) name = '${_capitalize(leisure.replaceAll('_', ' '))} Park';
-      else if (route   != null) name = '${_capitalize(route)} Trail';
-      else if (highway != null) name = '${_capitalize(highway.replaceAll('_', ' '))} Trail';
-      else if (landuse != null || natural != null) name = 'Neighborhood Park';
-      else continue;
+      if (leisure != null) {
+        name = '${_capitalize(leisure.replaceAll('_', ' '))} Park';
+      } else if (route != null) {
+        name = '${_capitalize(route)} Trail';
+      } else if (highway != null) {
+        name = '${_capitalize(highway.replaceAll('_', ' '))} Trail';
+      } else if (landuse != null || natural != null) {
+        name = 'Neighborhood Park';
+      } else {
+        continue;
+      }
     }
 
     final leisure = tags['leisure'] as String?;
     final highway = tags['highway'] as String?;
-    final route   = tags['route']   as String?;
+    final route = tags['route'] as String?;
     final natural = tags['natural'] as String?;
     final landuse = tags['landuse'] as String?;
 
     String typeLabel = 'park';
-    if (route   != null) typeLabel = 'trail';
+    if (route != null) typeLabel = 'trail';
     if (highway != null) typeLabel = 'path';
-    if (leisure != null || natural != null || landuse != null) typeLabel = 'park';
+    if (leisure != null || natural != null || landuse != null)
+      typeLabel = 'park';
 
     final rawGeom = el['geometry'] as List<dynamic>? ?? [];
     final List<LatLng> boundary = rawGeom
@@ -347,32 +349,41 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 
     double totalMeters = 0;
     for (int i = 0; i < boundary.length - 1; i++) {
-      totalMeters += distCalc.as(LengthUnit.Meter, boundary[i], boundary[i + 1]);
+      totalMeters +=
+          distCalc.as(LengthUnit.Meter, boundary[i], boundary[i + 1]);
     }
-    if (totalMeters < 160) continue; // ~0.1 mile minimum, skip tiny dead ends
+    if (totalMeters < 160) continue;
 
-    final avgLat = boundary.map((p) => p.latitude).reduce((a, b) => a + b)  / boundary.length;
-    final avgLon = boundary.map((p) => p.longitude).reduce((a, b) => a + b) / boundary.length;
+    final avgLat = boundary.map((p) => p.latitude).reduce((a, b) => a + b) /
+        boundary.length;
+    final avgLon = boundary.map((p) => p.longitude).reduce((a, b) => a + b) /
+        boundary.length;
     final placeCenter = LatLng(avgLat, avgLon);
 
-    if (distCalc.as(LengthUnit.Meter, center, placeCenter) > radiusMeters * 1.2) continue;
+    if (distCalc.as(LengthUnit.Meter, center, placeCenter) > radiusMeters * 1.2)
+      continue;
 
     seenIds.add(elId);
-    places.add(NearbyPlace(
-      id: elId, name: name, type: typeLabel,
-      center: placeCenter, boundary: boundary,
-      color: colors[colorIndex % colors.length],
-    ));
+    places.add(
+      NearbyPlace(
+        id: elId,
+        name: name,
+        type: typeLabel,
+        center: placeCenter,
+        boundary: boundary,
+        color: colors[colorIndex % colors.length],
+      ),
+    );
 
     colorIndex++;
     if (places.length >= 150) break;
   }
 
-  debugPrint('[map] ${places.length} places found, ready to filter client-side');
-
-  places.sort((a, b) => distCalc
-      .as(LengthUnit.Meter, center, a.center)
-      .compareTo(distCalc.as(LengthUnit.Meter, center, b.center)));
+  places.sort(
+    (a, b) => distCalc
+        .as(LengthUnit.Meter, center, a.center)
+        .compareTo(distCalc.as(LengthUnit.Meter, center, b.center)),
+  );
 
   return places;
 }
@@ -382,12 +393,18 @@ String _capitalize(String s) =>
 
 String _tagEmoji(String tag) {
   switch (tag) {
-    case 'food':     return '🍞';
-    case 'drinks':   return '🥤';
-    case 'medicine': return '💊';
-    case 'fun':      return '🎾';
-    case 'cosmetic': return '👓';
-    default:         return '📦';
+    case 'food':
+      return '🍞';
+    case 'drinks':
+      return '🥤';
+    case 'medicine':
+      return '💊';
+    case 'fun':
+      return '🎾';
+    case 'cosmetic':
+      return '👓';
+    default:
+      return '📦';
   }
 }
 
@@ -421,8 +438,10 @@ class MapModalContent extends StatelessWidget {
           Text(
             '🐾  Trail Explorer',
             style: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold,
-              color: Colors.white, letterSpacing: 1.1,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              letterSpacing: 1.1,
             ),
           ),
           SizedBox(height: 10),
@@ -435,18 +454,20 @@ class MapModalContent extends StatelessWidget {
 
 class _DragHandle extends StatelessWidget {
   const _DragHandle();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 40, height: 5,
+      width: 40,
+      height: 5,
       decoration: BoxDecoration(
-        color: Colors.grey, borderRadius: BorderRadius.circular(10),
+        color: Colors.grey,
+        borderRadius: BorderRadius.circular(10),
       ),
     );
   }
 }
 
-// main stateful widget that handles location, data fetching, filter state, and rewards
 class MapModalService extends StatefulWidget {
   const MapModalService({super.key});
 
@@ -456,28 +477,28 @@ class MapModalService extends StatefulWidget {
 
 class _MapModalServiceState extends State<MapModalService>
     with TickerProviderStateMixin {
-
   LatLng _currentLocation = const LatLng(39.9812, -75.1554);
   final MapController _mapController = MapController();
   StreamSubscription<Position>? _positionSubscription;
 
-  List<NearbyPlace> _allPlaces      = []; // full unfiltered list from Overpass
-  List<NearbyPlace> _filteredPlaces = []; // what actually shows on the map
-  List<ShopItem>    _shopItems      = [];
+  List<NearbyPlace> _allPlaces = [];
+  List<NearbyPlace> _filteredPlaces = [];
+  List<ShopItem> _shopItems = [];
 
-  bool   _loading    = true;
+  final List<Map<String, dynamic>> _otherUsers = [];
+
+  bool _loading = true;
   String _loadingMsg = 'Getting your location…';
 
-  // the currently selected distance filter — defaults to All, loaded from prefs
   DistanceFilter _activeFilter = DistanceFilter.all;
 
-  bool      _showReward      = false;
+  bool _showReward = false;
   ShopItem? _rewardItem;
-  String    _rewardPlaceName = '';
+  String _rewardPlaceName = '';
 
   late AnimationController _rewardAnim;
-  late Animation<double>   _rewardScale;
-  late Animation<double>   _rewardOpacity;
+  late Animation<double> _rewardScale;
+  late Animation<double> _rewardOpacity;
 
   @override
   void initState() {
@@ -488,30 +509,33 @@ class _MapModalServiceState extends State<MapModalService>
 
   void _setupRewardAnimation() {
     _rewardAnim = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1800));
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
     _rewardScale = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _rewardAnim, curve: Curves.elasticOut));
+      CurvedAnimation(parent: _rewardAnim, curve: Curves.elasticOut),
+    );
     _rewardOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _rewardAnim,
-        curve: const Interval(0.65, 1.0, curve: Curves.easeOut)));
+        curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
+      ),
+    );
   }
 
   Future<void> _initApp() async {
-    // load the saved filter before anything else so the UI is ready when places load
     _activeFilter = await _TrailPersistence.loadFilter();
 
     try {
       _shopItems = await ShopService.loadShopAssets();
     } catch (e) {
-      debugPrint('[map] shop load failed lol: $e');
+      debugPrint('[map] shop load failed: $e');
       _shopItems = [];
     }
+
     await _initLocation();
   }
 
-  // applies the active distance filter to _allPlaces and updates _filteredPlaces
-  // this is pure client-side, no network call needed — super fast
   void _applyFilter() {
     setState(() {
       _filteredPlaces = _allPlaces
@@ -520,37 +544,82 @@ class _MapModalServiceState extends State<MapModalService>
     });
   }
 
-  // called when user taps a filter chip — saves to prefs and re-filters
   void _setFilter(DistanceFilter filter) {
-    if (_activeFilter == filter) return; // already selected, nothing to do
+    if (_activeFilter == filter) return;
     setState(() => _activeFilter = filter);
-    _TrailPersistence.saveFilter(filter); // fire and forget is fine here
+    _TrailPersistence.saveFilter(filter);
     _applyFilter();
   }
 
   void _assignRewards() {
     if (_shopItems.isEmpty) return;
 
-    final tier0 = _shopItems.where((i) => i.tag == 'food'     || i.tag == 'drinks').toList();
-    final tier1 = _shopItems.where((i) => i.tag == 'medicine' || i.tag == 'fun').toList();
+    final tier0 =
+        _shopItems.where((i) => i.tag == 'food' || i.tag == 'drinks').toList();
+    final tier1 =
+        _shopItems.where((i) => i.tag == 'medicine' || i.tag == 'fun').toList();
     final tier2 = _shopItems.where((i) => i.tag == 'cosmetic').toList();
 
     for (final place in _allPlaces) {
       final miles = place.perimeterMiles;
       List<ShopItem> pool;
-      if      (miles >= 4.0 && tier2.isNotEmpty) pool = tier2;
-      else if (miles >= 2.0 && tier1.isNotEmpty) pool = tier1;
-      else if (tier0.isNotEmpty)                 pool = tier0;
-      else                                       pool = _shopItems;
+      if (miles >= 4.0 && tier2.isNotEmpty) {
+        pool = tier2;
+      } else if (miles >= 2.0 && tier1.isNotEmpty) {
+        pool = tier1;
+      } else if (tier0.isNotEmpty) {
+        pool = tier0;
+      } else {
+        pool = _shopItems;
+      }
 
       place.rewardItem = pool[place.id.hashCode.abs() % pool.length];
+    }
+  }
+
+  void _upsertOtherUser(Map<String, dynamic> userData) {
+    final normalized = Map<String, dynamic>.from(userData);
+
+    final id = normalized['id'] ??
+        normalized['uid'] ??
+        normalized['userId'] ??
+        normalized['username'];
+
+    if (id != null) {
+      final index = _otherUsers.indexWhere(
+        (u) => (u['id'] ?? u['uid'] ?? u['userId'] ?? u['username']) == id,
+      );
+
+      if (index >= 0) {
+        _otherUsers[index] = normalized;
+      } else {
+        _otherUsers.add(normalized);
+      }
+      return;
+    }
+
+    final lat = (normalized['lat'] as num?)?.toDouble();
+    final lng = (normalized['lng'] as num?)?.toDouble();
+    final index = _otherUsers.indexWhere(
+      (u) =>
+          ((u['lat'] as num?)?.toDouble() == lat) &&
+          ((u['lng'] as num?)?.toDouble() == lng),
+    );
+
+    if (index < 0) {
+      _otherUsers.add(normalized);
+    } else {
+      _otherUsers[index] = normalized;
     }
   }
 
   Future<void> _initLocation() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      setState(() { _loadingMsg = 'Location services are off'; _loading = false; });
+      setState(() {
+        _loadingMsg = 'Location services are off';
+        _loading = false;
+      });
       return;
     }
 
@@ -558,14 +627,31 @@ class _MapModalServiceState extends State<MapModalService>
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        setState(() { _loadingMsg = 'Location permission denied'; _loading = false; });
+        setState(() {
+          _loadingMsg = 'Location permission denied';
+          _loading = false;
+        });
         return;
       }
     }
+
     if (permission == LocationPermission.deniedForever) {
-      setState(() { _loadingMsg = 'Location permission permanently denied'; _loading = false; });
+      setState(() {
+        _loadingMsg = 'Location permission permanently denied';
+        _loading = false;
+      });
       return;
     }
+
+    _service.startLocationSharing(
+      onNewUserFound: (userData) {
+        if (!mounted) return;
+
+        final normalized = Map<String, dynamic>.from(userData);
+
+        setState(() => _upsertOtherUser(normalized));
+      },
+    );
 
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
@@ -584,11 +670,10 @@ class _MapModalServiceState extends State<MapModalService>
     _allPlaces = places;
     _assignRewards();
 
-    // restore completed state from SharedPrefs
     final completedIds = await _TrailPersistence.loadCompletedToday();
     for (final place in _allPlaces) {
       if (!completedIds.contains(place.id)) continue;
-      place.status        = TrailStatus.completed;
+      place.status = TrailStatus.completed;
       place.walkedFraction = 1.0;
 
       if (place.rewardItem == null && _shopItems.isNotEmpty) {
@@ -602,7 +687,6 @@ class _MapModalServiceState extends State<MapModalService>
       }
     }
 
-    // apply the filter now that we have all the places
     _applyFilter();
     setState(() => _loading = false);
 
@@ -616,12 +700,12 @@ class _MapModalServiceState extends State<MapModalService>
 
   void _onPosition(Position pos) {
     if (!mounted) return;
+
     final loc = LatLng(pos.latitude, pos.longitude);
 
     setState(() => _currentLocation = loc);
     _mapController.move(loc, _mapController.camera.zoom);
 
-    // check all places, not just filtered ones — user might walk into a filtered-out trail
     for (final place in _allPlaces) {
       final prevStatus = place.status;
       place.checkUserPosition(loc);
@@ -647,20 +731,22 @@ class _MapModalServiceState extends State<MapModalService>
 
     if (!mounted) return;
     setState(() {
-      _rewardItem      = place.rewardItem;
+      _rewardItem = place.rewardItem;
       _rewardPlaceName = place.name;
-      _showReward      = true;
+      _showReward = true;
     });
 
     _rewardAnim.forward(from: 0).then((_) {
-      if (mounted) setState(() => _showReward = false);
+      if (mounted) {
+        setState(() => _showReward = false);
+      }
     });
   }
 
   void _manualComplete(NearbyPlace place) {
     if (place.status == TrailStatus.completed) return;
     setState(() {
-      place.status        = TrailStatus.completed;
+      place.status = TrailStatus.completed;
       place.walkedFraction = 1.0;
     });
     _awardItem(place);
@@ -684,6 +770,7 @@ class _MapModalServiceState extends State<MapModalService>
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    _service.stop();
     _rewardAnim.dispose();
     super.dispose();
   }
@@ -692,8 +779,6 @@ class _MapModalServiceState extends State<MapModalService>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-
-        // the actual map
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
@@ -706,51 +791,93 @@ class _MapModalServiceState extends State<MapModalService>
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'app',
             ),
-
-            // only show polylines for filtered places
             if (_filteredPlaces.isNotEmpty)
               PolylineLayer(
                 polylines: _filteredPlaces
                     .where((p) => p.boundary.length > 1)
-                    .map<Polyline>((p) => Polyline(
-                          points: p.boundary,
-                          color: p.color.withOpacity(
-                            p.status == TrailStatus.completed ? 1.0 : 0.55),
-                          strokeWidth: p.status == TrailStatus.completed ? 4.5 : 2.5,
-                        ))
+                    .map<Polyline>(
+                      (p) => Polyline(
+                        points: p.boundary,
+                        color: p.color.withOpacity(
+                          p.status == TrailStatus.completed ? 1.0 : 0.55,
+                        ),
+                        strokeWidth:
+                            p.status == TrailStatus.completed ? 4.5 : 2.5,
+                      ),
+                    )
                     .toList(),
               ),
-
-            // only show labels for filtered places
             if (_filteredPlaces.isNotEmpty)
               MarkerLayer(
                 markers: _filteredPlaces
-                    .map((p) => Marker(
-                          point: p.center,
-                          width: 140, height: 52,
-                          child: _PlaceLabel(place: p),
-                        ))
+                    .map(
+                      (p) => Marker(
+                        point: p.center,
+                        width: 140,
+                        height: 52,
+                        child: _PlaceLabel(place: p),
+                      ),
+                    )
                     .toList(),
               ),
-
-            // lil cat at user's current position
             MarkerLayer(
               markers: [
                 Marker(
                   point: _currentLocation,
-                  width: 40, height: 40,
+                  width: 40,
+                  height: 40,
                   child: const Text('🐱', style: TextStyle(fontSize: 30)),
                 ),
+                ..._otherUsers.map((user) {
+                  final double lat = (user['lat'] is num)
+                      ? (user['lat'] as num).toDouble()
+                      : 0.0;
+                  final double lng = (user['lng'] is num)
+                      ? (user['lng'] as num).toDouble()
+                      : 0.0;
+                  final String displayName =
+                      (user['name'] ?? user['username'] ?? '').toString();
+
+                  return Marker(
+                    point: LatLng(lat, lng),
+                    width: 56,
+                    height: 56,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🐾', style: TextStyle(fontSize: 25)),
+                        if (displayName.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A2535).withOpacity(0.92),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white12),
+                            ),
+                            child: Text(
+                              displayName,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
-
             RichAttributionWidget(
-              attributions: [TextSourceAttribution('OpenStreetMap contributors')],
+              attributions: [
+                TextSourceAttribution('OpenStreetMap contributors')
+              ],
             ),
           ],
         ),
-
-        // loading overlay
         if (_loading)
           Container(
             color: const Color(0xFF0F1923).withOpacity(0.85),
@@ -759,23 +886,28 @@ class _MapModalServiceState extends State<MapModalService>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const CircularProgressIndicator(
-                    color: Color(0xFF2ECC71), strokeWidth: 2.5),
+                    color: Color(0xFF2ECC71),
+                    strokeWidth: 2.5,
+                  ),
                   const SizedBox(height: 16),
-                  Text(_loadingMsg,
-                      style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  Text(
+                    _loadingMsg,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
                   const SizedBox(height: 6),
-                  const Text('(this may take a few seconds)',
-                      style: TextStyle(color: Colors.white30, fontSize: 11)),
+                  const Text(
+                    '(this may take a few seconds)',
+                    style: TextStyle(color: Colors.white30, fontSize: 11),
+                  ),
                 ],
               ),
             ),
           ),
-
-        // filter chips row — always visible once loading is done
-        // sits at the top so it doesn't get buried by the map controls
         if (!_loading)
           Positioned(
-            top: 12, left: 56, right: 12,
+            top: 12,
+            left: 56,
+            right: 12,
             child: _DistanceFilterBar(
               active: _activeFilter,
               totalCount: _allPlaces.length,
@@ -783,11 +915,11 @@ class _MapModalServiceState extends State<MapModalService>
               onSelect: _setFilter,
             ),
           ),
-
-        // empty state — shown when filter is too tight and nothing passes
         if (!_loading && _filteredPlaces.isEmpty && _allPlaces.isNotEmpty)
           Positioned(
-            top: 70, left: 16, right: 16,
+            top: 70,
+            left: 16,
+            right: 16,
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -802,11 +934,11 @@ class _MapModalServiceState extends State<MapModalService>
               ),
             ),
           ),
-
-        // empty state — shown when Overpass came back with nothing at all
         if (!_loading && _allPlaces.isEmpty)
           Positioned(
-            top: 70, left: 16, right: 16,
+            top: 70,
+            left: 16,
+            right: 16,
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -817,13 +949,18 @@ class _MapModalServiceState extends State<MapModalService>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('No trails or parks found nearby.',
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
-                      textAlign: TextAlign.center),
+                  const Text(
+                    'No trails or parks found nearby.',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: () {
-                      setState(() { _loading = true; _loadingMsg = 'Retrying…'; });
+                      setState(() {
+                        _loading = true;
+                        _loadingMsg = 'Retrying…';
+                      });
                       fetchNearbyPlaces(_currentLocation).then((places) {
                         if (!mounted) return;
                         _allPlaces = places;
@@ -833,43 +970,50 @@ class _MapModalServiceState extends State<MapModalService>
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2ECC71).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFF2ECC71)),
                       ),
-                      child: const Text('Retry',
-                          style: TextStyle(color: Color(0xFF2ECC71),
-                              fontSize: 12, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Retry',
+                        style: TextStyle(
+                          color: Color(0xFF2ECC71),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
-        // re-center button top left
         Positioned(
-          top: 12, left: 12,
+          top: 12,
+          left: 12,
           child: GestureDetector(
             onTap: () => _mapController.move(_currentLocation, 14.0),
             child: Container(
-              width: 40, height: 40,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: const Color(0xFF1A2535).withOpacity(0.95),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.white12),
               ),
-              child: const Icon(Icons.my_location, color: Color(0xFF2ECC71), size: 20),
+              child: const Icon(Icons.my_location,
+                  color: Color(0xFF2ECC71), size: 20),
             ),
           ),
         ),
-
-        // bottom scrollable place cards — only filtered places
         if (!_loading && _filteredPlaces.isNotEmpty)
           Positioned(
-            bottom: 12, left: 0, right: 0,
+            bottom: 12,
+            left: 0,
+            right: 0,
             child: _PlaceLegend(
               places: _filteredPlaces,
               onTap: (p) {
@@ -878,8 +1022,6 @@ class _MapModalServiceState extends State<MapModalService>
               },
             ),
           ),
-
-        // reward popup
         if (_showReward)
           Center(
             child: AnimatedBuilder(
@@ -901,8 +1043,6 @@ class _MapModalServiceState extends State<MapModalService>
   }
 }
 
-// the filter bar with distance chip options — lives at the top of the map
-// shows the count of visible places next to the active chip so users know what changed
 class _DistanceFilterBar extends StatelessWidget {
   final DistanceFilter active;
   final int totalCount;
@@ -931,15 +1071,16 @@ class _DistanceFilterBar extends StatelessWidget {
         children: [
           const Text('📏', style: TextStyle(fontSize: 12)),
           const SizedBox(width: 4),
-          ...DistanceFilter.values.map((filter) => Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: _FilterChip(
-              label: filter.label,
-              isActive: filter == active,
-              onTap: () => onSelect(filter),
+          ...DistanceFilter.values.map(
+            (filter) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: _FilterChip(
+                label: filter.label,
+                isActive: filter == active,
+                onTap: () => onSelect(filter),
+              ),
             ),
-          )),
-          // lil count badge so users see how many places match
+          ),
           const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -950,7 +1091,10 @@ class _DistanceFilterBar extends StatelessWidget {
             child: Text(
               '$filteredCount',
               style: const TextStyle(
-                color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold),
+                color: Colors.white54,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -959,7 +1103,6 @@ class _DistanceFilterBar extends StatelessWidget {
   }
 }
 
-// individual filter chip — green when active, muted when not
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isActive;
@@ -1001,7 +1144,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// floating label on the map showing the place name + reward preview
 class _PlaceLabel extends StatelessWidget {
   final NearbyPlace place;
   const _PlaceLabel({required this.place});
@@ -1025,13 +1167,15 @@ class _PlaceLabel extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (isComplete)
-                const Text('✓ ', style: TextStyle(color: Colors.black, fontSize: 9)),
+                const Text('✓ ',
+                    style: TextStyle(color: Colors.black, fontSize: 9)),
               Flexible(
                 child: Text(
                   place.name,
                   style: TextStyle(
                     color: isComplete ? Colors.black : Colors.white,
-                    fontSize: 9, fontWeight: FontWeight.bold,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1039,9 +1183,7 @@ class _PlaceLabel extends StatelessWidget {
             ],
           ),
         ),
-
         const SizedBox(height: 3),
-
         if (!isComplete && place.rewardItem != null)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
@@ -1060,7 +1202,10 @@ class _PlaceLabel extends StatelessWidget {
                   child: Text(
                     place.rewardItem!.name,
                     style: TextStyle(
-                      color: place.color, fontSize: 8, fontWeight: FontWeight.bold),
+                      color: place.color,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -1075,16 +1220,20 @@ class _PlaceLabel extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: const Color(0xFFFFD700), width: 1),
             ),
-            child: const Text('✓ collected',
-                style: TextStyle(
-                  color: Color(0xFFFFD700), fontSize: 8, fontWeight: FontWeight.bold)),
+            child: const Text(
+              '✓ collected',
+              style: TextStyle(
+                color: Color(0xFFFFD700),
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
       ],
     );
   }
 }
 
-// bottom horizontal scroll list of place cards
 class _PlaceLegend extends StatelessWidget {
   final List<NearbyPlace> places;
   final void Function(NearbyPlace) onTap;
@@ -1114,9 +1263,9 @@ class _PlaceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isComplete  = place.status == TrailStatus.completed;
+    final isComplete = place.status == TrailStatus.completed;
     final borderColor = isComplete ? const Color(0xFFFFD700) : place.color;
-    final reward      = place.rewardItem;
+    final reward = place.rewardItem;
 
     return Container(
       width: 165,
@@ -1133,64 +1282,85 @@ class _PlaceCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-
           Row(
             children: [
-              Container(width: 8, height: 8,
-                  decoration: BoxDecoration(color: place.color, shape: BoxShape.circle)),
+              Container(
+                width: 8,
+                height: 8,
+                decoration:
+                    BoxDecoration(color: place.color, shape: BoxShape.circle),
+              ),
               const SizedBox(width: 5),
               Expanded(
-                child: Text(place.name,
-                    style: const TextStyle(color: Colors.white,
-                        fontSize: 11, fontWeight: FontWeight.bold),
-                    overflow: TextOverflow.ellipsis),
+                child: Text(
+                  place.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(place.type.toUpperCase(),
-                  style: TextStyle(color: place.color.withOpacity(0.8),
-                      fontSize: 9, letterSpacing: 0.8)),
-              Text(place.distanceLabel,
-                  style: const TextStyle(color: Colors.white38, fontSize: 9)),
+              Text(
+                place.type.toUpperCase(),
+                style: TextStyle(
+                  color: place.color.withOpacity(0.8),
+                  fontSize: 9,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Text(
+                place.distanceLabel,
+                style: const TextStyle(color: Colors.white38, fontSize: 9),
+              ),
             ],
           ),
-
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: place.walkedFraction,
               backgroundColor: Colors.white12,
               valueColor: AlwaysStoppedAnimation<Color>(
-                isComplete ? const Color(0xFFFFD700) : place.color),
+                isComplete ? const Color(0xFFFFD700) : place.color,
+              ),
               minHeight: 4,
             ),
           ),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isComplete ? '✓ Done'
+                isComplete
+                    ? '✓ Done'
                     : place.status == TrailStatus.active
                         ? '${(place.walkedFraction * 100).round()}%'
                         : 'Nearby',
                 style: TextStyle(
                   color: isComplete ? const Color(0xFFFFD700) : Colors.white54,
-                  fontSize: 10),
+                  fontSize: 10,
+                ),
               ),
               if (reward != null)
                 Row(
                   children: [
-                    Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 10)),
+                    Text(_tagEmoji(reward.tag),
+                        style: const TextStyle(fontSize: 10)),
                     const SizedBox(width: 2),
-                    Text(reward.name,
-                        style: TextStyle(
-                          color: isComplete ? const Color(0xFFFFD700) : place.color,
-                          fontSize: 9, fontWeight: FontWeight.bold)),
+                    Text(
+                      reward.name,
+                      style: TextStyle(
+                        color:
+                            isComplete ? const Color(0xFFFFD700) : place.color,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
             ],
@@ -1201,7 +1371,6 @@ class _PlaceCard extends StatelessWidget {
   }
 }
 
-// full detail sheet that pops up when you tap a place card
 class _PlaceDetailSheet extends StatelessWidget {
   final NearbyPlace place;
   final VoidCallback onComplete;
@@ -1210,7 +1379,7 @@ class _PlaceDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isComplete = place.status == TrailStatus.completed;
-    final reward     = place.rewardItem;
+    final reward = place.rewardItem;
 
     return Container(
       decoration: const BoxDecoration(
@@ -1222,50 +1391,71 @@ class _PlaceDetailSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Center(
             child: Container(
-              width: 36, height: 4,
+              width: 36,
+              height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24, borderRadius: BorderRadius.circular(8)),
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-
           Row(
             children: [
-              Container(width: 12, height: 12,
-                  decoration: BoxDecoration(color: place.color, shape: BoxShape.circle)),
+              Container(
+                width: 12,
+                height: 12,
+                decoration:
+                    BoxDecoration(color: place.color, shape: BoxShape.circle),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(place.name,
-                    style: const TextStyle(color: Colors.white,
-                        fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text(
+                  place.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
               if (isComplete)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFD700).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFFFFD700)),
                   ),
-                  child: const Text('✓ Done',
-                      style: TextStyle(color: Color(0xFFFFD700),
-                          fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    '✓ Done',
+                    style: TextStyle(
+                      color: Color(0xFFFFD700),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 4),
-          Text(place.type.toUpperCase(),
-              style: TextStyle(color: place.color.withOpacity(0.8),
-                  fontSize: 11, letterSpacing: 1.2)),
+          Text(
+            place.type.toUpperCase(),
+            style: TextStyle(
+              color: place.color.withOpacity(0.8),
+              fontSize: 11,
+              letterSpacing: 1.2,
+            ),
+          ),
           const SizedBox(height: 20),
-
           Row(
             children: [
               _StatChip(
-                icon: '⏱️', label: 'Est. time',
+                icon: '⏱️',
+                label: 'Est. time',
                 value: place.estimatedMinutes < 60
                     ? '${place.estimatedMinutes} min'
                     : '${(place.estimatedMinutes / 60).toStringAsFixed(1)} hr',
@@ -1273,7 +1463,8 @@ class _PlaceDetailSheet extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _StatChip(
-                icon: '👟', label: 'Est. steps',
+                icon: '👟',
+                label: 'Est. steps',
                 value: place.estimatedSteps >= 1000
                     ? '~${(place.estimatedSteps / 1000).toStringAsFixed(1)}k'
                     : '${place.estimatedSteps}',
@@ -1281,23 +1472,28 @@ class _PlaceDetailSheet extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _StatChip(
-                icon: '📏', label: 'Distance',
+                icon: '📏',
+                label: 'Distance',
                 value: place.distanceLabel,
                 color: place.color,
               ),
             ],
           ),
           const SizedBox(height: 16),
-
           if (!isComplete && place.status == TrailStatus.active) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Progress',
                     style: TextStyle(color: Colors.white54, fontSize: 12)),
-                Text('${(place.walkedFraction * 100).round()}%',
-                    style: TextStyle(color: place.color, fontSize: 12,
-                        fontWeight: FontWeight.bold)),
+                Text(
+                  '${(place.walkedFraction * 100).round()}%',
+                  style: TextStyle(
+                    color: place.color,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -1312,7 +1508,6 @@ class _PlaceDetailSheet extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-
           if (reward != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1323,7 +1518,8 @@ class _PlaceDetailSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 22)),
+                  Text(_tagEmoji(reward.tag),
+                      style: const TextStyle(fontSize: 22)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -1332,25 +1528,36 @@ class _PlaceDetailSheet extends StatelessWidget {
                         Text(
                           isComplete ? 'Collected!' : 'Reward',
                           style: TextStyle(
-                            color: isComplete ? const Color(0xFFFFD700) : Colors.white54,
-                            fontSize: 10),
+                            color: isComplete
+                                ? const Color(0xFFFFD700)
+                                : Colors.white54,
+                            fontSize: 10,
+                          ),
                         ),
-                        Text(reward.name,
-                            style: TextStyle(
-                              color: isComplete ? const Color(0xFFFFD700) : Colors.white,
-                              fontSize: 14, fontWeight: FontWeight.bold)),
-                        Text(reward.description,
-                            style: const TextStyle(color: Colors.white38, fontSize: 10),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                        Text(
+                          reward.name,
+                          style: TextStyle(
+                            color: isComplete
+                                ? const Color(0xFFFFD700)
+                                : Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          reward.description,
+                          style: const TextStyle(
+                              color: Colors.white38, fontSize: 10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-
           const SizedBox(height: 20),
-
           if (isComplete)
             Container(
               width: double.infinity,
@@ -1358,18 +1565,26 @@ class _PlaceDetailSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFFFFD700).withOpacity(0.08),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                border:
+                    Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
               ),
               child: const Column(
                 children: [
                   Text('🐱', style: TextStyle(fontSize: 32)),
                   SizedBox(height: 6),
-                  Text('Trail done!',
-                      style: TextStyle(color: Color(0xFFFFD700),
-                          fontSize: 14, fontWeight: FontWeight.bold)),
+                  Text(
+                    'Trail done!',
+                    style: TextStyle(
+                      color: Color(0xFFFFD700),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   SizedBox(height: 2),
-                  Text('Item added to inventory',
-                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                  Text(
+                    'Item added to inventory',
+                    style: TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
                 ],
               ),
             )
@@ -1381,20 +1596,29 @@ class _PlaceDetailSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [place.color, place.color.withOpacity(0.7)]),
+                      colors: [place.color, place.color.withOpacity(0.7)]),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(
-                    color: place.color.withOpacity(0.35),
-                    blurRadius: 12, offset: const Offset(0, 4))],
+                  boxShadow: [
+                    BoxShadow(
+                      color: place.color.withOpacity(0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text('🐾', style: TextStyle(fontSize: 20)),
                     SizedBox(width: 10),
-                    Text('I completed this!',
-                        style: TextStyle(color: Colors.white,
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      'I completed this!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1410,9 +1634,12 @@ class _StatChip extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+
   const _StatChip({
-    required this.icon, required this.label,
-    required this.value, required this.color,
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
   });
 
   @override
@@ -1429,11 +1656,17 @@ class _StatChip extends StatelessWidget {
           children: [
             Text(icon, style: const TextStyle(fontSize: 20)),
             const SizedBox(height: 4),
-            Text(value, style: TextStyle(
-              color: color, fontSize: 14, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: TextStyle(
+                  color: color, fontSize: 14, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 2),
-            Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9),
-                textAlign: TextAlign.center),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white38, fontSize: 9),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
@@ -1441,7 +1674,6 @@ class _StatChip extends StatelessWidget {
   }
 }
 
-// popup that bounces in right after completing a trail
 class _RewardBurst extends StatelessWidget {
   final ShopItem? item;
   final String placeName;
@@ -1458,7 +1690,9 @@ class _RewardBurst extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFFD700).withOpacity(0.35),
-            blurRadius: 28, spreadRadius: 6),
+            blurRadius: 28,
+            spreadRadius: 6,
+          ),
         ],
       ),
       child: Column(
@@ -1466,38 +1700,50 @@ class _RewardBurst extends StatelessWidget {
         children: [
           const Text('🐱', style: TextStyle(fontSize: 52)),
           const SizedBox(height: 8),
-          const Text('Got some steps in 🚶',
-              style: TextStyle(color: Colors.white,
-                  fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text(
+            'Got some steps in 🚶',
+            style: TextStyle(
+                color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text(placeName,
-              style: const TextStyle(color: Colors.white54, fontSize: 12),
-              textAlign: TextAlign.center),
+          Text(
+            placeName,
+            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 14),
-
           if (item != null) ...[
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_tagEmoji(item!.tag), style: const TextStyle(fontSize: 28)),
+                Text(_tagEmoji(item!.tag),
+                    style: const TextStyle(fontSize: 28)),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(item!.name,
-                        style: const TextStyle(color: Color(0xFFFFD700),
-                            fontSize: 20, fontWeight: FontWeight.bold)),
-                    const Text('added to inventory',
-                        style: TextStyle(color: Colors.white54, fontSize: 11)),
+                    Text(
+                      item!.name,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'added to inventory',
+                      style: TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 10),
           ],
-
-          const Text('Got some steps in 🚶',
-              style: TextStyle(color: Colors.white38, fontSize: 12)),
+          const Text(
+            'Got some steps in 🚶',
+            style: TextStyle(color: Colors.white38, fontSize: 12),
+          ),
         ],
       ),
     );
