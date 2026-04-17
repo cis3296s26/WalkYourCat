@@ -137,8 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _initializeCoins() async {
-    // Temporary test seed so the shop starts with 300 coins.
-    await _currencyManager.setCoinBalance(10000);
+    // Temporary test seed so the shop starts with 2500 coins.
+    await _currencyManager.setCoinBalance(2500);
     await _loadCoins();
   }
 
@@ -295,11 +295,28 @@ class _MyHomePageState extends State<MyHomePage> {
 
   /// user action taken when reviving the cat.
   Future<void> _payVetBill() async {
-    CatStatsController.instance.revive();
     debugPrint("[MAIN]: Attempting to pay vet bill...");
-    setState(() {
-        _coins -= 2500; // Deduct 10,000 coins for vet bill
+
+    // check for enough coins
+    if (_coins >= 2500) {
+      // Deduct 2,500 coins for vet bill
+      setState(() {
+        _coins -= 2500;
       });
+
+      // revive cat
+      CatStatsController.instance.revive();
+
+      // update coin balance
+      await _currencyManager.setCoinBalance(_coins);
+      player.play(AssetSource('sounds/purchase.wav'));
+      debugPrint("[MAIN]: Paid vet bill!");
+    }
+    // else, it cannot revive
+    else {
+      showMessage(context, "Not enough coins available for purchase");
+      player.play(AssetSource('sounds/declined.mp3'));
+    }
   }
 
   @override
