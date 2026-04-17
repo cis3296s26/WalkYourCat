@@ -49,11 +49,13 @@ void main() async {
       ),
     );
 
-    runApp(const MyApp());
+  
   } catch (e, stacktrace) {
     debugPrint('FATAL ERROR: $e');
     debugPrint('STACKTRACE: $stacktrace');
   }
+
+  runApp(const MyApp());
 
   FeaturesTour.setGlobalConfig(
     preDialogConfig: PreDialogConfig(
@@ -157,7 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeCoins() async {
     // Temporary test seed so the shop starts with 2500 coins.
-    await _currencyManager.setCoinBalance(2500);
+    // await _currencyManager.setCoinBalance(2500);
     await _loadCoins();
   }
 
