@@ -138,7 +138,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeCoins() async {
     // Temporary test seed so the shop starts with 300 coins.
-    await _currencyManager.setCoinBalance(300);
+    await _currencyManager.setCoinBalance(10000);
     await _loadCoins();
   }
 
@@ -297,6 +297,9 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _payVetBill() async {
     CatStatsController.instance.revive();
     debugPrint("[MAIN]: Attempting to pay vet bill...");
+    setState(() {
+        _coins -= 2500; // Deduct 10,000 coins for vet bill
+      });
   }
 
   @override
@@ -360,7 +363,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ElevatedButton.icon(
                                 onPressed: _payVetBill,
                                 icon: const Icon(Icons.payment_rounded, size: 18),
-                                label: const Text('Pay Bill (10,000)'),
+                                label: const Text('Pay Bill (2,500)'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.redAccent,
                                   foregroundColor: Colors.white,

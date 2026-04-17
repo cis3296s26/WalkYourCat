@@ -149,6 +149,9 @@ class CatStatsController extends ChangeNotifier {
   /// Resets all stats to 100. Used for reviving the cat.
   Future<void> revive() async {
     debugPrint("[STAT]: REVIVE() WAS CALLED");
+    food = 100.0;
+    health = 100.0;
+    happinessPercent = 1.0;
   }
 }
 
