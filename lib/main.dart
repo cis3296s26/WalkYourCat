@@ -433,7 +433,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       value: SampleItem.optionTwo,
                       child: Text('Profile/Account'),
                     ),
-                    const PopupMenuItem<SampleItem>(
+                    PopupMenuItem<SampleItem>(
                       value: SampleItem.optionThree,
                       onTap: _openLeaderboard,
                       child: Text('Leaderboard'),
