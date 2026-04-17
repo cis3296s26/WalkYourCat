@@ -17,6 +17,7 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
 import 'package:walkyourcat/features/challenges/challenges_ui.dart';
 import 'package:walkyourcat/features/map/map_modal.dart';
+import 'package:walkyourcat/features/leaderboard/leaderboard_modal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:features_tour/features_tour.dart';
 
@@ -226,6 +227,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _openAchievements() {
     showAchievementsModal(context);
+  }
+
+  void _openLeaderboard() {
+    showLeaderboardModal(context);
   }
 
   void _playItemAnimation(String tag) async {
@@ -515,8 +520,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       value: SampleItem.optionTwo,
                       child: Text('Profile/Account'),
                     ),
-                    const PopupMenuItem<SampleItem>(
+                    PopupMenuItem<SampleItem>(
                       value: SampleItem.optionThree,
+                      onTap: _openLeaderboard,
                       child: Text('Leaderboard'),
                     ),
                     PopupMenuItem<SampleItem>(
