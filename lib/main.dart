@@ -20,10 +20,15 @@ import 'package:walkyourcat/features/map/map_modal.dart';
 import 'package:walkyourcat/features/leaderboard/leaderboard_modal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:features_tour/features_tour.dart';
+import 'package:flutter/services.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
 void main() async {
+  // tucks away android nav bar
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   try {
     WidgetsFlutterBinding.ensureInitialized();
     if (kIsWeb) {
@@ -164,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeCoins() async {
     // Temporary test seed so the shop starts with 2500 coins.
-    // await _currencyManager.setCoinBalance(2500);
+    await _currencyManager.setCoinBalance(5000);
     await _loadCoins();
   }
 
