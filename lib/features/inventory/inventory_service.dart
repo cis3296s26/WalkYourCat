@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
-import 'package:walkyourcat/core/services/database_service.dart';
+import 'package:walkyourcat/services/database_service.dart';
 import './inventory_item.dart';
 import '../shop/shop_item.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart'; // to update challenge progress

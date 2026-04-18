@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:walkyourcat/core/services/database_service.dart';
+import 'package:walkyourcat/services/database_service.dart';
 import 'challenge_item.dart';
 import 'package:walkyourcat/features/achievements/achievements_service.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';

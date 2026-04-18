@@ -4,7 +4,7 @@ import 'package:pedometer/pedometer.dart';                      // for pedometer
 import 'dart:async';                                            // for async functions
 import 'package:walkyourcat/stepcurrency_manager.dart';         // for managing coins and steps
 import 'package:flutter/foundation.dart';
-import 'package:walkyourcat/core/services/geo_service.dart';
+import 'package:walkyourcat/services/geo_service.dart';
 
 class StepCounter extends StatefulWidget {
   const StepCounter({super.key, required this.title, required this.onCoinsUpdated});

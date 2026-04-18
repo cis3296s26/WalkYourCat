@@ -2,8 +2,8 @@ import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
-import 'package:walkyourcat/core/services/database_service.dart';
-import 'package:walkyourcat/core/services/geo_service.dart';
+import 'package:walkyourcat/services/database_service.dart';
+import 'package:walkyourcat/services/geo_service.dart';
 
 class LocationDbService {
   final FirebaseDatabase _db = DatabaseService.instance.firebaseDb;

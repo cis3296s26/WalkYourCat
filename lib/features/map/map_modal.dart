@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:walkyourcat/core/services/geo_service.dart';
+import 'package:walkyourcat/services/geo_service.dart';
 
 import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';

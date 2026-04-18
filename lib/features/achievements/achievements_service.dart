@@ -1,5 +1,5 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:walkyourcat/core/services/database_service.dart';
+import 'package:walkyourcat/services/database_service.dart';
 import 'package:walkyourcat/features/challenges/challenge_item.dart';
 import 'achievement_item.dart';
 

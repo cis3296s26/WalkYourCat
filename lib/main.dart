@@ -1,4 +1,4 @@
-import 'package:walkyourcat/core/services/geo_service.dart';
+import 'package:walkyourcat/services/geo_service.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
