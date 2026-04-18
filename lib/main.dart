@@ -171,8 +171,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeCoins() async {
     // Temporary test seed so the shop starts with 2500 coins.
-    await _currencyManager.setCoinBalance(5000);
-    await _loadCoins();
+    // await _currencyManager.setCoinBalance(5000);
+    // await _loadCoins();
   }
 
   Future<void> _loadCoins() async {
