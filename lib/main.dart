@@ -1,3 +1,4 @@
+import 'package:walkyourcat/core/services/geo_service.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
@@ -133,6 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _initializeCoins();
     tourController.start(context);
+    GeoService.instance.initTracking();
     // Update background every minute to check if hour changed
     _backgroundUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
