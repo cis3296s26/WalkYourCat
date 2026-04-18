@@ -17,17 +17,8 @@ class LocationDbService {
   Future<void> startLocationSharing({
     required Function(Map data) onNewUserFound,
   }) async {
-    /// I love asking users for personal data :)
-    print("We are trying to get permissions!");
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.deniedForever) return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-    );
+    Position? position = await GeoService.instance.getCurrentPosition();
+    if (position == null) return;
 
     final now = DateTime.now().millisecondsSinceEpoch;
     _userRef = _db.ref("active_users").push();
