@@ -1,15 +1,12 @@
 import 'dart:math';
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'package:walkyourcat/core/services/database_service.dart';
+import 'package:walkyourcat/core/services/geo_service.dart';
 
 class LocationDbService {
-  final FirebaseDatabase _db = FirebaseDatabase.instanceFor(
-    app: Firebase.app(), 
-    databaseURL: "https://wyc-2025-default-rtdb.firebaseio.com/",
-  );
+  final FirebaseDatabase _db = DatabaseService.instance.firebaseDb;
 
   late DatabaseReference _userRef;
   StreamSubscription<DatabaseEvent>? _listener;
@@ -24,7 +21,6 @@ class LocationDbService {
     _userRef = _db.ref("active_users").push();
     
     // Automatically delete from DB when app closes/disconnects
-    // If it works needs testing
     await _userRef.onDisconnect().remove();
 
     // Some privacy respect
@@ -34,7 +30,7 @@ class LocationDbService {
       "joinedAt": now,
     });
 
-    // Listener object to recieve data
+    // Listener object to receive data
     _listener = _db
         .ref("active_users")
         .orderByChild("joinedAt")
