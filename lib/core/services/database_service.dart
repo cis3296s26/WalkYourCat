@@ -89,7 +89,7 @@ class DatabaseService {
   FirebaseDatabase get firebaseDb {
     return FirebaseDatabase.instanceFor(
       app: Firebase.app(),
-      databaseURL: "https://wyc-2025-default-rtdb.firebaseio.com/",
+      databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
     );
   }
 
