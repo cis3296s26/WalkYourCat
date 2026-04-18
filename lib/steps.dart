@@ -1,10 +1,10 @@
 /* ----- IMPORT STATEMENTS ----- */
 import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';                      // for pedometer API
-import 'package:permission_handler/permission_handler.dart';    // for requesting permissions
 import 'dart:async';                                            // for async functions
 import 'package:walkyourcat/stepcurrency_manager.dart';         // for managing coins and steps
 import 'package:flutter/foundation.dart';
+import 'package:walkyourcat/core/services/geo_service.dart';
 
 class StepCounter extends StatefulWidget {
   const StepCounter({super.key, required this.title, required this.onCoinsUpdated});
@@ -25,14 +25,7 @@ class StepCounterState extends State<StepCounter> {
 
   /* ------- CHECK ACTIVITY RECOGNITION PERMISSION ------- */
   Future<bool> _checkActivityRecognitionPermission() async {
-    bool granted = await Permission.activityRecognition.isGranted;
-
-    if (!granted) {
-      granted = await Permission.activityRecognition.request() ==
-          PermissionStatus.granted;
-    }
-
-    return granted;
+    return await GeoService.instance.checkActivityRecognitionPermission();
   }
   /* ---- END OF CHECK ACTIVITY RECOGNITION PERMISSION ---- */
 
