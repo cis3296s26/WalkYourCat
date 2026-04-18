@@ -11,7 +11,7 @@ import 'package:walkyourcat/core/services/geo_service.dart';
 import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';
 import '../inventory/inventory_service.dart';
-import 'map_db_service.dart';
+import 'map_service.dart';
 
 final _service = LocationDbService();
 
