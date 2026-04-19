@@ -9,6 +9,7 @@ class DatabaseService {
   // Singleton Alert!?
   static final DatabaseService instance = DatabaseService._init();
   static Database? _database;
+  static const _firebaseDatabaseUrl = String.fromEnvironment('FIREBASE_DB_URL');
 
   DatabaseService._init();
 
@@ -91,7 +92,7 @@ class DatabaseService {
   FirebaseDatabase get firebaseDb {
     return FirebaseDatabase.instanceFor(
       app: Firebase.app(),
-      databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+      databaseURL: _firebaseDatabaseUrl,
     );
   }
 
