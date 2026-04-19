@@ -27,15 +27,17 @@ class DatabaseService {
       path = join(dbPath, filePath);
     }
 
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-        appId: String.fromEnvironment('FIREBASE_APP_ID'),
-        messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
-        projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-        databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
-      ),
-    );
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+          appId: String.fromEnvironment('FIREBASE_APP_ID'),
+          messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+          projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+          databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+        ),
+      );
+    }
 
     return await openDatabase(
       path,

@@ -46,18 +46,20 @@ void main() async {
     const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
     debugPrint('API Key loaded: ${apiKey.isNotEmpty}');
 
-    if (kIsWeb) {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-          appId: String.fromEnvironment('FIREBASE_APP_ID'),
-          messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
-          projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-          databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
-        ),
-      );
-    } else if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp();
+    if (Firebase.apps.isEmpty) {
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+            appId: String.fromEnvironment('FIREBASE_APP_ID'),
+            messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+            projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+            databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+          ),
+        );
+      } else {
+        await Firebase.initializeApp();
+      }
     }
 
   
