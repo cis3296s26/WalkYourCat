@@ -289,7 +289,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return 'assets/images/bg_morning.png';
     } else {
       // 5pm - 7:59pm
-      return 'assets/images/bg_morning.png';
+      return 'assets/images/bg_sunset.png';
     }
   }
 
