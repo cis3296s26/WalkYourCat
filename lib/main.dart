@@ -1,3 +1,4 @@
+import 'package:walkyourcat/services/geo_service.dart';
 import 'dart:io';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
@@ -45,18 +46,20 @@ void main() async {
     const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
     debugPrint('API Key loaded: ${apiKey.isNotEmpty}');
 
-    if (kIsWeb) {
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
-          appId: String.fromEnvironment('FIREBASE_APP_ID'),
-          messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
-          projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
-          databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
-        ),
-      );
-    } else if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp();
+    if (Firebase.apps.isEmpty) {
+      if (kIsWeb) {
+        await Firebase.initializeApp(
+          options: const FirebaseOptions(
+            apiKey: String.fromEnvironment('FIREBASE_API_KEY'),
+            appId: String.fromEnvironment('FIREBASE_APP_ID'),
+            messagingSenderId: String.fromEnvironment('FIREBASE_SENDER_ID'),
+            projectId: String.fromEnvironment('FIREBASE_PROJECT_ID'),
+            databaseURL: String.fromEnvironment('FIREBASE_DB_URL'),
+          ),
+        );
+      } else {
+        await Firebase.initializeApp();
+      }
     }
 
   
@@ -145,6 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _initializeCoins();
     tourController.start(context);
+    GeoService.instance.initTracking();
     // Update background every minute to check if hour changed
     _backgroundUpdateTimer = Timer.periodic(const Duration(minutes: 1), (_) {
       if (mounted) {
@@ -169,8 +173,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeCoins() async {
     // Temporary test seed so the shop starts with 2500 coins.
-    await _currencyManager.setCoinBalance(5000);
-    await _loadCoins();
+    // await _currencyManager.setCoinBalance(5000);
+    // await _loadCoins();
   }
 
   Future<void> _loadCoins() async {

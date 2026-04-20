@@ -6,11 +6,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:walkyourcat/services/geo_service.dart';
 
 import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';
 import '../inventory/inventory_service.dart';
-import 'map_db_service.dart';
+import 'map_service.dart';
 
 final _service = LocationDbService();
 
@@ -614,30 +615,10 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   Future<void> _initLocation() async {
-    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
+    bool hasPermission = await GeoService.instance.checkLocationPermission();
+    if (!hasPermission) {
       setState(() {
-        _loadingMsg = 'Location services are off';
-        _loading = false;
-      });
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        setState(() {
-          _loadingMsg = 'Location permission denied';
-          _loading = false;
-        });
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      setState(() {
-        _loadingMsg = 'Location permission permanently denied';
+        _loadingMsg = 'Location permission denied';
         _loading = false;
       });
       return;
@@ -653,16 +634,24 @@ class _MapModalServiceState extends State<MapModalService>
       },
     );
 
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+    Position? position = GeoService.instance.currentPosition;
+    if (position == null) {
+      position = await GeoService.instance.getCurrentPosition();
+    }
 
     if (!mounted) return;
-    setState(() {
-      _currentLocation = LatLng(position.latitude, position.longitude);
-      _loadingMsg = 'Finding trails & parks within 5 miles…';
-    });
-    _mapController.move(_currentLocation, 14.0);
+    
+    if (position != null) {
+      setState(() {
+        _currentLocation = LatLng(position!.latitude, position!.longitude);
+        _loadingMsg = 'Finding trails & parks within 5 miles…';
+      });
+      _mapController.move(_currentLocation, 14.0);
+    } else {
+      setState(() {
+        _loadingMsg = 'Could not get location';
+      });
+    }
 
     final places = await fetchNearbyPlaces(_currentLocation);
     if (!mounted) return;
@@ -690,12 +679,10 @@ class _MapModalServiceState extends State<MapModalService>
     _applyFilter();
     setState(() => _loading = false);
 
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      ),
-    ).listen(_onPosition);
+    _positionSubscription = GeoService.instance.positionStream
+        .where((pos) => pos != null)
+        .cast<Position>()
+        .listen(_onPosition);
   }
 
   void _onPosition(Position pos) {

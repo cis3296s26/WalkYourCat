@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import 'package:walkyourcat/cat_stats_bar.dart';
+import 'package:walkyourcat/services/database_service.dart';
 import './inventory_item.dart';
 import '../shop/shop_item.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart'; // to update challenge progress
@@ -9,53 +9,11 @@ import 'package:walkyourcat/features/challenges/challenges_service.dart'; // to 
 class InventoryService {
   // Singleton Alert!?
   static final InventoryService instance = InventoryService._init();
-  static Database? _database;
 
   InventoryService._init();
 
-  /// Fetches or creates a new database and returns the connection
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('inventory.db');
-    return _database!;
-  }
-
-  /// Creates a new database at the specified path and returns a connection
-  Future<Database> _initDB(String filePath) async {
-    String path;
-    
-    if (kIsWeb) {
-      // Web uses a virtual path/indexedDB
-      path = filePath; 
-    } else {
-      final dbPath = await getDatabasesPath();
-      path = join(dbPath, filePath);
-    }
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
-  }
-
-  /// The initialization function used to generate the base of our app
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE inventory (
-        id INTEGER PRIMARY KEY,
-        image TEXT,
-        tag TEXT NOT NULL,
-        name TEXT NOT NULL,
-        price INTEGER NOT NULL,
-        description TEXT NOT NULL,
-        hunger INTEGER NOT NULL,
-        health INTEGER NOT NULL,
-        happiness INTEGER NOT NULL,
-        quantity INTEGER NOT NULL
-      )
-    ''');
-  }
+  /// Fetches the database from the shared DatabaseService
+  Future<Database> get database async => await DatabaseService.instance.database;
 
   /// Add an item or increment quantity if it exists
   Future<void> addItem(ShopItem item) async {

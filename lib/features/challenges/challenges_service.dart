@@ -3,54 +3,19 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:walkyourcat/services/database_service.dart';
 import 'challenge_item.dart';
 import 'package:walkyourcat/features/achievements/achievements_service.dart';
 import 'package:walkyourcat/stepcurrency_manager.dart';
 
 class ChallengesService {
   static final ChallengesService instance = ChallengesService._init();
-  static Database? _database;
 
   ChallengesService._init();
 
   final String _jsonPath = 'assets/challenges.json';
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB('active_challenges.db');
-    return _database!;
-  }
-
-  Future<Database> _initDB(String filePath) async {
-    String path;
-    if (kIsWeb) {
-      path = filePath;
-    } else {
-      final dbPath = await getDatabasesPath();
-      path = join(dbPath, filePath);
-    }
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
-  }
-
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE active_challenges (
-        id TEXT PRIMARY KEY,
-        title TEXT NOT NULL,
-        description TEXT NOT NULL,
-        type TEXT NOT NULL,
-        targetValue INTEGER NOT NULL,
-        progress INTEGER NOT NULL,
-        rewardCoins INTEGER NOT NULL,
-        metaTarget TEXT
-      )
-    ''');
-  }
+  Future<Database> get database async => await DatabaseService.instance.database;
 
   /// Get active challenges, pulling from templated JSON if DB is empty
   Future<List<Challenge>> fetchChallenges() async {
