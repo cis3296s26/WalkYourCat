@@ -422,7 +422,7 @@ void showMapModal(
       insetPadding: const EdgeInsets.fromLTRB(16, 24, 16, 56),
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.80,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         decoration: BoxDecoration(
           color: const Color(0xFF0F1923),
@@ -467,28 +467,12 @@ void showMapModal(
                 inventoryTargetKey: inventoryTargetKey,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
           ],
         ),
       ),
     ),
   );
-}
-
-class _DragHandle extends StatelessWidget {
-  const _DragHandle();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 5,
-      decoration: BoxDecoration(
-        color: Colors.grey,
-        borderRadius: BorderRadius.circular(10),
-      ),
-    );
-  }
 }
 
 class MapModalService extends StatefulWidget {
