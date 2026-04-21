@@ -410,49 +410,58 @@ String _tagEmoji(String tag) {
 }
 
 void showMapModal(BuildContext context) {
-  showModalBottomSheet(
+  showDialog(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => SizedBox(
-      height: MediaQuery.of(context).size.height * 0.75,
-      child: const MapModalContent(),
+    builder: (context) => Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.80,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F1923),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.white12),
+          boxShadow: const [
+            BoxShadow(color: Colors.black54, blurRadius: 24, spreadRadius: 4),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  '🐾 Cat walks',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close, color: Colors.white54, size: 20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Flexible(child: MapModalService()),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     ),
   );
 }
-
-class MapModalContent extends StatelessWidget {
-  const MapModalContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F1923),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      child: const Column(
-        children: [
-          SizedBox(height: 10),
-          _DragHandle(),
-          SizedBox(height: 10),
-          Text(
-            '🐾  Trail Explorer',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-              letterSpacing: 1.1,
-            ),
-          ),
-          SizedBox(height: 10),
-          Expanded(child: MapModalService()),
-        ],
-      ),
-    );
-  }
-}
-
 class _DragHandle extends StatelessWidget {
   const _DragHandle();
 
