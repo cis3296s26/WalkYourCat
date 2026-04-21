@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:walkyourcat/services/geo_service.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';
@@ -409,12 +410,16 @@ String _tagEmoji(String tag) {
   }
 }
 
-void showMapModal(BuildContext context) {
+void showMapModal(
+  BuildContext context, {
+  Future<void> Function(GlobalKey)? runAddToCartAnimation,
+  GlobalKey? inventoryTargetKey,
+}) {
   showDialog(
     context: context,
     builder: (context) => Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40),
+      insetPadding: const EdgeInsets.fromLTRB(16, 24, 16, 56),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.80,
@@ -427,6 +432,7 @@ void showMapModal(BuildContext context) {
             BoxShadow(color: Colors.black54, blurRadius: 24, spreadRadius: 4),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -448,13 +454,19 @@ void showMapModal(BuildContext context) {
                   padding: const EdgeInsets.only(right: 12),
                   child: GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    child: const Icon(Icons.close,
+                        color: Colors.white54, size: 20),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            const Flexible(child: MapModalService()),
+            Flexible(
+              child: MapModalService(
+                runAddToCartAnimation: runAddToCartAnimation,
+                inventoryTargetKey: inventoryTargetKey,
+              ),
+            ),
             const SizedBox(height: 8),
           ],
         ),
@@ -462,6 +474,7 @@ void showMapModal(BuildContext context) {
     ),
   );
 }
+
 class _DragHandle extends StatelessWidget {
   const _DragHandle();
 
@@ -479,7 +492,14 @@ class _DragHandle extends StatelessWidget {
 }
 
 class MapModalService extends StatefulWidget {
-  const MapModalService({super.key});
+  final Future<void> Function(GlobalKey)? runAddToCartAnimation;
+  final GlobalKey? inventoryTargetKey;
+
+  const MapModalService({
+    super.key,
+    this.runAddToCartAnimation,
+    this.inventoryTargetKey,
+  });
 
   @override
   State<MapModalService> createState() => _MapModalServiceState();
@@ -489,6 +509,7 @@ class _MapModalServiceState extends State<MapModalService>
     with TickerProviderStateMixin {
   LatLng _currentLocation = const LatLng(39.9812, -75.1554);
   final MapController _mapController = MapController();
+  final GlobalKey _rewardItemKey = GlobalKey();
   StreamSubscription<Position>? _positionSubscription;
 
   List<NearbyPlace> _allPlaces = [];
@@ -649,10 +670,12 @@ class _MapModalServiceState extends State<MapModalService>
     }
 
     if (!mounted) return;
-    
-    if (position != null) {
+
+    final currentPosition = position;
+    if (currentPosition != null) {
       setState(() {
-        _currentLocation = LatLng(position!.latitude, position!.longitude);
+        _currentLocation =
+            LatLng(currentPosition.latitude, currentPosition.longitude);
         _loadingMsg = 'Finding trails & parks within 5 miles…';
       });
       _mapController.move(_currentLocation, 14.0);
@@ -732,6 +755,18 @@ class _MapModalServiceState extends State<MapModalService>
       _showReward = true;
     });
 
+    final runAnimation = widget.runAddToCartAnimation;
+    if (place.rewardItem != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_showReward) return;
+        if (widget.inventoryTargetKey != null) {
+          unawaited(_runRewardFlight());
+        } else if (runAnimation != null) {
+          unawaited(runAnimation(_rewardItemKey));
+        }
+      });
+    }
+
     _rewardAnim.forward(from: 0).then((_) {
       if (mounted) {
         setState(() => _showReward = false);
@@ -746,6 +781,81 @@ class _MapModalServiceState extends State<MapModalService>
       place.walkedFraction = 1.0;
     });
     _awardItem(place);
+  }
+
+  Future<void> _runRewardFlight() async {
+    final sourceBounds = _globalPaintBounds(_rewardItemKey);
+    final targetKey = widget.inventoryTargetKey;
+    final targetBounds =
+        targetKey == null ? null : _globalPaintBounds(targetKey);
+    final item = _rewardItem;
+    final overlay = Overlay.of(context, rootOverlay: true);
+
+    if (sourceBounds == null || targetBounds == null || item == null) return;
+
+    final controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
+    final animation = CurvedAnimation(
+      parent: controller,
+      curve: Curves.easeInOutCubic,
+    );
+
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (_) => AnimatedBuilder(
+        animation: animation,
+        builder: (context, child) {
+          final rect = Rect.lerp(sourceBounds, targetBounds, animation.value)!;
+          final lift = 28 * (1 - (2 * animation.value - 1).abs());
+
+          return Positioned(
+            left: rect.left,
+            top: rect.top - lift,
+            width: rect.width,
+            height: rect.height,
+            child: IgnorePointer(
+              child: Transform.scale(
+                scale: 1 - (animation.value * 0.35),
+                child: child,
+              ),
+            ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF5CC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFFD700), width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.24),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: _RewardItemVisual(item: item, size: 30),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    await controller.forward();
+    entry.remove();
+    controller.dispose();
+  }
+
+  Rect? _globalPaintBounds(GlobalKey key) {
+    final renderObject = key.currentContext?.findRenderObject();
+    final translation = renderObject?.getTransformTo(null).getTranslation();
+    if (renderObject == null || translation == null) return null;
+    return renderObject.paintBounds.shift(
+      Offset(translation.x, translation.y),
+    );
   }
 
   void _showPlaceDetail(NearbyPlace place) {
@@ -1007,7 +1117,7 @@ class _MapModalServiceState extends State<MapModalService>
         ),
         if (!_loading && _filteredPlaces.isNotEmpty)
           Positioned(
-            bottom: 12,
+            bottom: 24,
             left: 0,
             right: 0,
             child: _PlaceLegend(
@@ -1029,6 +1139,7 @@ class _MapModalServiceState extends State<MapModalService>
                   child: _RewardBurst(
                     item: _rewardItem,
                     placeName: _rewardPlaceName,
+                    itemKey: _rewardItemKey,
                   ),
                 ),
               ),
@@ -1673,7 +1784,13 @@ class _StatChip extends StatelessWidget {
 class _RewardBurst extends StatelessWidget {
   final ShopItem? item;
   final String placeName;
-  const _RewardBurst({required this.item, required this.placeName});
+  final GlobalKey? itemKey;
+
+  const _RewardBurst({
+    required this.item,
+    required this.placeName,
+    this.itemKey,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1712,8 +1829,16 @@ class _RewardBurst extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_tagEmoji(item!.tag),
-                    style: const TextStyle(fontSize: 28)),
+                Container(
+                  key: itemKey,
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF5CC),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: _RewardItemVisual(item: item!, size: 30),
+                ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1745,3 +1870,79 @@ class _RewardBurst extends StatelessWidget {
     );
   }
 }
+
+class _RewardItemVisual extends StatelessWidget {
+  final ShopItem item;
+  final double size;
+
+  const _RewardItemVisual({
+    required this.item,
+    required this.size,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = _styleForItemTag(item.tag);
+
+    if (item.image != null && item.image!.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(8),
+        child: Image.asset(
+          item.image!,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(
+            style.icon,
+            color: style.accent,
+            size: size,
+          ),
+        ),
+      );
+    }
+
+    return Icon(
+      style.icon,
+      color: style.accent,
+      size: size,
+    );
+  }
+}
+
+class _ItemTagStyle {
+  final IconData icon;
+  final Color accent;
+
+  const _ItemTagStyle({
+    required this.icon,
+    required this.accent,
+  });
+}
+
+const Map<String, _ItemTagStyle> _itemTagStyles = {
+  'food': _ItemTagStyle(
+    icon: Icons.lunch_dining_rounded,
+    accent: Color(0xFFFF7043),
+  ),
+  'drinks': _ItemTagStyle(
+    icon: Icons.local_drink_rounded,
+    accent: Color(0xFF2196F3),
+  ),
+  'fun': _ItemTagStyle(
+    icon: Icons.sports_esports_rounded,
+    accent: Color(0xFF7E57C2),
+  ),
+  'medicine': _ItemTagStyle(
+    icon: Icons.medication_rounded,
+    accent: Color(0xFF26A69A),
+  ),
+  'cosmetic': _ItemTagStyle(
+    icon: FontAwesomeIcons.glasses,
+    accent: Color(0xFFE91E8C),
+  ),
+};
+
+_ItemTagStyle _styleForItemTag(String tag) =>
+    _itemTagStyles[tag] ??
+    const _ItemTagStyle(
+      icon: Icons.inventory_2_rounded,
+      accent: Color(0xFF78909C),
+    );

@@ -61,8 +61,6 @@ void main() async {
         await Firebase.initializeApp();
       }
     }
-
-  
   } catch (e, stacktrace) {
     debugPrint('FATAL ERROR: $e');
     debugPrint('STACKTRACE: $stacktrace');
@@ -167,7 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  void _runTutorial(){
+  void _runTutorial() {
     tourController.start(context, force: true);
   }
 
@@ -223,7 +221,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openMap() {
-    showMapModal(context);
+    showMapModal(
+      context,
+      runAddToCartAnimation: runAddToCartAnimation,
+      inventoryTargetKey: inventoryKey,
+    );
   }
 
   void _openChallenges() {
@@ -393,7 +395,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.redAccent.shade100, width: 2),
+                            border: Border.all(
+                                color: Colors.redAccent.shade100, width: 2),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.red.withValues(alpha: 0.1),
@@ -404,7 +407,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           child: Column(
                             children: [
-                              const Icon(Icons.local_hospital_rounded, color: Colors.redAccent, size: 56),
+                              const Icon(Icons.local_hospital_rounded,
+                                  color: Colors.redAccent, size: 56),
                               const SizedBox(height: 12),
                               const Text(
                                 'AT THE VET',
@@ -418,13 +422,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               const SizedBox(height: 20),
                               ElevatedButton.icon(
                                 onPressed: _payVetBill,
-                                icon: const Icon(Icons.payment_rounded, size: 18),
+                                icon:
+                                    const Icon(Icons.payment_rounded, size: 18),
                                 label: const Text('Pay Bill (2,500)'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.redAccent,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
