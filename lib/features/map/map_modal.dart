@@ -417,61 +417,68 @@ void showMapModal(
 }) {
   showDialog(
     context: context,
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.fromLTRB(16, 24, 16, 56),
-      child: Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F1923),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white12),
-          boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 24, spreadRadius: 4),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+    builder: (context) {
+      final screenSize = MediaQuery.of(context).size;
+
+      final dialogWidth =
+          screenSize.width < 600 ? screenSize.width * 0.9 : 520.0;
+      final dialogHeight =
+          screenSize.height < 760 ? screenSize.height * 0.72 : 620.0;
+
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: SizedBox(
+          width: dialogWidth,
+          height: dialogHeight,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F1923),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white12),
+              boxShadow: const [
+                BoxShadow(
+                    color: Colors.black54, blurRadius: 24, spreadRadius: 4),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
               children: [
-                const Text(
-                  '🐾 Cat walks',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.1,
-                  ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    const Text(
+                      '🐾 Cat walks',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded,
+                          color: Colors.white),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.close,
-                        color: Colors.white54, size: 20),
+                const SizedBox(height: 10),
+
+                Expanded(
+                  child: MapModalService(
+                    runAddToCartAnimation: runAddToCartAnimation,
+                    inventoryTargetKey: inventoryTargetKey,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: MapModalService(
-                runAddToCartAnimation: runAddToCartAnimation,
-                inventoryTargetKey: inventoryTargetKey,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -1289,15 +1296,17 @@ class _PlaceLabel extends StatelessWidget {
                 Text(_tagEmoji(place.rewardItem!.tag),
                     style: const TextStyle(fontSize: 8)),
                 const SizedBox(width: 3),
-                Flexible(
+                SizedBox(
+                  width: 55,
                   child: Text(
                     place.rewardItem!.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: place.color,
                       fontSize: 8,
                       fontWeight: FontWeight.bold,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -1438,21 +1447,27 @@ class _PlaceCard extends StatelessWidget {
                 ),
               ),
               if (reward != null)
-                Row(
-                  children: [
-                    Text(_tagEmoji(reward.tag),
-                        style: const TextStyle(fontSize: 10)),
-                    const SizedBox(width: 2),
-                    Text(
-                      reward.name,
-                      style: TextStyle(
-                        color:
-                            isComplete ? const Color(0xFFFFD700) : place.color,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_tagEmoji(reward.tag),
+                          style: const TextStyle(fontSize: 10)),
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: Text(
+                          reward.name,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                          style: TextStyle(
+                            color: isComplete ? const Color(0xFFFFD700) : place.color,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
           ),
