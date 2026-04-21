@@ -247,30 +247,49 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _playItemAnimation(String tag) async {
-    /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
-    // --------- FOOD --------
-    if (tag == 'food') {
-      setState(() {
-        _currentCatImage = 'assets/animations/eating_cat.gif';
-      });
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _currentCatImage = 'assets/animations/idle_cat.gif';
-        });
-      }
-      // --------- TOYS --------
-    } else if (tag == 'fun') {
-      setState(() {
-        _currentCatImage = 'assets/animations/happy_cat.gif';
-      });
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _currentCatImage = 'assets/animations/idle_cat.gif';
-        });
-      }
+    /* --- VARIABLES --- */
+    String animation;
+    // keywords
+    String eating = 'assets/animations/eating_cat.gif';
+    String drinking = 'assets/animations/drinking_cat.gif';
+    String groomed = 'assets/animations/happy_cat.gif';
+    String idle = 'assets/animations/idle_cat.gif';
+    String playing = 'assets/animations/playing_cat.gif';
+
+    /* ------ DECIDING ANIMATION BASED ON TAG ------ */
+    switch (tag) {
+      case 'food':
+        debugPrint('[MAIN - ANI]: Playing food animation');
+        animation = eating;
+      case 'drinks':
+        debugPrint('[MAIN - ANI]: Playing drink animation');
+        animation = drinking;
+      case 'fun':
+        debugPrint('[MAIN - ANI]: Playing fun animation');
+        animation = playing;
+      case 'medicine':
+        debugPrint('[MAIN - ANI]: Playing medicine animation');
+        animation = drinking;
+      case 'cosmetic':
+        debugPrint('[MAIN - ANI]: Playing cosmetic animation');
+        animation = groomed;
+      default:
+        debugPrint('[MAIN - ANI]: No animation for tag: $tag');
+        animation = idle;
     }
+    /* --- END OF DECIDING ANIMATION BASED ON TAG --- */
+
+    // update cat image for 2 seconds, then revert back to idle
+    setState(() {
+      _currentCatImage = animation;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      setState(() {
+        _currentCatImage = 'assets/animations/idle_cat.gif';
+      });
+    }
+
   }
 
   String _getBackgroundImageForCurrentTime() {
