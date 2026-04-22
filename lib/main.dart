@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:walkyourcat/features/achievements/achievements_modal.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
@@ -241,7 +240,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openAchievements() {
-    showAchievementsModal(context);
+    showChallengesModal(context, initialTab: 1);
   }
 
   void _openLeaderboard() {
@@ -537,7 +536,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     const PopupMenuItem<SampleItem>(
                       value: SampleItem.optionTwo,
-                      child: Text('Profile/Account'),
+                      child: Text('Profile'),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionThree,

@@ -1,5 +1,15 @@
 # WalkYourCat
-## CIS 3296 Final Project
+
+[![Android Build](https://github.com/cis3296s26/WalkYourCat/actions/workflows/build-android.yaml/badge.svg)](https://github.com/cis3296s26/WalkYourCat/actions)
+[![Deploy Status](https://github.com/cis3296s26/WalkYourCat/actions/workflows/deploy.yaml/badge.svg)](https://github.com/cis3296s26/WalkYourCat/actions)
+
+![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white) ![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) ![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=ios&logoColor=white) ![Web](https://img.shields.io/badge/Web-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)
+
+
+#### [Explore Docs](https://github.com/cis3296s26/WalkYourCat) / [Report Bug](https://github.com/cis3296s26/WalkYourCat/issues) / [Request Feature](https://github.com/cis3296s26/WalkYourCat/issues) 
+
+---
+
 WalkYourCat is for people who want motivation to increase their daily physical activity and exercise. It is a fitness app grounded in game theory that allows users to convert their physical activity into a positive response loop by taking care of their virtual pet.
 
 ![This is a screenshot.](week4picture.png)
@@ -57,6 +67,23 @@ Follow this project board to know the latest status of the project: [https://git
 - Use Andriod Studio for Android, XCode for IOS or any other IDE such as VSCode for the browser version.
 - To be able to run the code dart: ">=3.9.0-0 <4.0.0" and flutter: ">=3.35.0" is required to be installed prior.
 - Go to "How to run" to see how to run the app.
+
+### Firebase Integrations
+In order to use the realtime database aspect of this app you will need to use Firebase. There is a very nice guide by [Google](https://firebase.google.com/docs/database/flutter/start) that we recommend.
+
+Once a project is created you will add a `config.json` at the root of your project like:
+
+```json
+{
+    "FIREBASE_API_KEY": "xxx", 
+    "FIREBASE_APP_ID": "xxx", 
+    "FIREBASE_SENDER_ID": "xxx", 
+    "FIREBASE_PROJECT_ID": "xxx",
+    "FIREBASE_DB_URL": "xxx"
+}
+```
+
+Running the project with the extra flag `--dart-define-from-file=config.json` to ensure that it is loaded into the enviroment!
 
 ## How to Build
 ### Android
