@@ -6,7 +6,7 @@
 ![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white) ![Dart](https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white) ![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) ![iOS](https://img.shields.io/badge/iOS-000000?style=for-the-badge&logo=ios&logoColor=white) ![Web](https://img.shields.io/badge/Web-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)
 
 
-#### [Explore Docs](https://github.com/cis3296s26/WalkYourCat) / [Report Bug](https://github.com/cis3296s26/WalkYourCat/issues) / [Request Feature](https://github.com/cis3296s26/WalkYourCat/issues)
+#### [Explore Docs](https://github.com/cis3296s26/WalkYourCat) / [Report Bug](https://github.com/cis3296s26/WalkYourCat/issues) / [Request Feature](https://github.com/cis3296s26/WalkYourCat/issues) 
 
 ---
 
