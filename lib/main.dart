@@ -523,11 +523,22 @@ class _MyHomePageState extends State<MyHomePage> {
               introduce: Text(
                   "This is the menu button! Here you can access your profile, settings, achievements, social features, and tutorial!"),
               child: Positioned(
-                top: 36,
+                top: 30,
                 right: 16,
                 child: PopupMenuButton<SampleItem>(
                   initialValue: _selectedItem,
-                  icon: const Icon(Icons.more_vert),
+                  icon: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.deepPurple,
+                    ),
+                    child: const Icon(
+                      Icons.more_vert,
+                      color: Colors.white,
+                    ),
+                  ),
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<SampleItem>>[
                     const PopupMenuItem<SampleItem>(
