@@ -121,6 +121,49 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class _MenuOption extends StatelessWidget {
+  const _MenuOption({
+    required this.icon,
+    required this.label,
+    this.accent = Colors.deepPurple,
+    this.soft = const Color(0xFFF1EBFF),
+  });
+
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final Color soft;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: soft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accent, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2F1F17),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -527,6 +570,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 right: 16,
                 child: PopupMenuButton<SampleItem>(
                   initialValue: _selectedItem,
+                  color: const Color(0xFFFFFBF7),
+                  elevation: 10,
+                  offset: const Offset(0, 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
                   icon: Container(
                     width: 48,
                     height: 48,
@@ -543,26 +592,43 @@ class _MyHomePageState extends State<MyHomePage> {
                       <PopupMenuEntry<SampleItem>>[
                     const PopupMenuItem<SampleItem>(
                       value: SampleItem.optionOne,
-                      child: Text('Settings'),
+                      child: _MenuOption(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                      ),
                     ),
                     const PopupMenuItem<SampleItem>(
                       value: SampleItem.optionTwo,
-                      child: Text('Profile'),
+                      child: _MenuOption(
+                        icon: Icons.person_rounded,
+                        label: 'Profile',
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionThree,
                       onTap: _openLeaderboard,
-                      child: Text('Leaderboard'),
+                      child: const _MenuOption(
+                        icon: Icons.leaderboard_rounded,
+                        label: 'Leaderboard',
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionFour,
                       onTap: _openAchievements,
-                      child: Text('Achievements'),
+                      child: const _MenuOption(
+                        icon: Icons.emoji_events_rounded,
+                        label: 'Achievements',
+                        accent: Color(0xFFE7A100),
+                        soft: Color(0xFFFFF1D6),
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionFive,
                       onTap: _runTutorial,
-                      child: Text('Tutorial'),
+                      child: const _MenuOption(
+                        icon: Icons.school_rounded,
+                        label: 'Tutorial',
+                      ),
                     )
                   ],
                 ),
