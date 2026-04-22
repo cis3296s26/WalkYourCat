@@ -58,10 +58,7 @@ class StepCounterState extends State<StepCounter> {
       return; 
     }
 
-    bool granted = await _checkActivityRecognitionPermission();
-    if (!granted) {
-      debugPrint('Activity Recognition permission not granted');
-    }
+    await GeoService.instance.requestPermissionsSequentially();
 
     _stepCountStream = Pedometer.stepCountStream;
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
