@@ -630,7 +630,7 @@ class _MapModalServiceState extends State<MapModalService>
   late Animation<double>   _rewardOpacity;
 
   late AnimationController _sheetAnim;
-  late CurvedAnimation     _sheetSlide; // typed as CurvedAnimation so we can dispose it
+  late CurvedAnimation     _sheetSlide;
 
   @override
   void initState() {
@@ -659,7 +659,7 @@ class _MapModalServiceState extends State<MapModalService>
     _rewardAnim.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
         setState(() => _showReward = false);
-        _rewardAnim.reset(); // ready for the next reward
+        _rewardAnim.reset();
       }
     });
 
@@ -848,7 +848,6 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   Future<void> _runRewardFlight() async {
-    // Wait one extra frame so the reward widget is fully laid out
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
 
@@ -871,13 +870,12 @@ class _MapModalServiceState extends State<MapModalService>
     );
     final anim = CurvedAnimation(parent: ctrl, curve: Curves.easeInOutCubic);
 
-    OverlayEntry? entry; 
+    OverlayEntry? entry;
     entry = OverlayEntry(
       builder: (_) => AnimatedBuilder(
         animation: anim,
         builder: (ctx, child) {
           final rect = Rect.lerp(srcBounds, tgtBounds, anim.value)!;
-          // Arc: lift peaks at the midpoint of the flight
           final lift = 40.0 * (1.0 - (2.0 * anim.value - 1.0).abs());
 
           return Positioned(
@@ -887,7 +885,6 @@ class _MapModalServiceState extends State<MapModalService>
             height: rect.height,
             child: IgnorePointer(
               child: Opacity(
-                // FIX: fade out during the last 20% of the flight
                 opacity: anim.value < 0.8 ? 1.0 : (1.0 - anim.value) / 0.2,
                 child: Transform.scale(
                   scale: 1.0 - (anim.value * 0.3),
@@ -943,7 +940,7 @@ class _MapModalServiceState extends State<MapModalService>
     _service.stop();
     _rewardAnim.dispose();
     _sheetAnim.dispose();
-    _sheetSlide.dispose(); 
+    _sheetSlide.dispose();
     super.dispose();
   }
 
@@ -1045,7 +1042,6 @@ class _MapModalServiceState extends State<MapModalService>
                   ),
                 )).toList(),
               ),
-            // User + other users
             MarkerLayer(
               markers: [
                 Marker(
@@ -1128,7 +1124,6 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // ── Distance filter bar ───────────────────────────────────────────────
         if (!_loading)
           Positioned(
             top: 12, left: 58, right: 12,
@@ -1536,6 +1531,9 @@ class _TrailRow extends StatelessWidget {
   }
 }
 
+// ── Place detail sheet ────────────────────────────────────────────────────────
+// FIX: made the "I completed this!" button compact (inline row, no tall box)
+
 class _PlaceDetailSheet extends StatelessWidget {
   final NearbyPlace place;
   final VoidCallback onClose;
@@ -1561,11 +1559,12 @@ class _PlaceDetailSheet extends StatelessWidget {
           BoxShadow(color: Colors.black45, blurRadius: 20, spreadRadius: 2),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Drag handle + close
           Row(children: [
             Expanded(child: Center(
               child: Container(
@@ -1586,8 +1585,9 @@ class _PlaceDetailSheet extends StatelessWidget {
               ),
             ),
           ]),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
+          // Name + done badge
           Row(children: [
             Container(
                 width: 10, height: 10,
@@ -1596,7 +1596,7 @@ class _PlaceDetailSheet extends StatelessWidget {
             Expanded(
               child: Text(place.name,
                 style: const TextStyle(
-                    fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white)),
+                    fontSize: 17, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
             if (isDone)
               Container(
@@ -1611,11 +1611,12 @@ class _PlaceDetailSheet extends StatelessWidget {
                       color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.bold)),
               ),
           ]),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(place.type.toUpperCase(),
             style: TextStyle(fontSize: 10, letterSpacing: 1.2, color: color.withOpacity(0.75))),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
+          // Stat chips
           Row(children: [
             _StatChip(
               icon: '⏱️', label: 'Est. time',
@@ -1636,36 +1637,38 @@ class _PlaceDetailSheet extends StatelessWidget {
             _StatChip(icon: '📏', label: 'Distance', value: place.distanceLabel, color: color),
           ]),
 
+          // Progress bar (active only)
           if (!isDone && place.status == TrailStatus.active) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               const Text('Progress', style: TextStyle(color: Colors.white54, fontSize: 12)),
               Text('${(place.walkedFraction * 100).round()}%',
                 style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
             ]),
-            const SizedBox(height: 6),
+            const SizedBox(height: 5),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
                 value: place.walkedFraction,
                 backgroundColor: Colors.white10,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
-                minHeight: 7,
+                minHeight: 6,
               ),
             ),
           ],
 
+          // Reward row
           if (reward != null) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.07),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(13),
                 border: Border.all(color: color.withOpacity(0.3)),
               ),
               child: Row(children: [
-                Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 22)),
+                Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 20)),
                 const SizedBox(width: 10),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(isDone ? 'Collected!' : 'Reward',
@@ -1675,7 +1678,7 @@ class _PlaceDetailSheet extends StatelessWidget {
                   Text(reward.name,
                     style: TextStyle(
                       color: isDone ? const Color(0xFFFFD700) : Colors.white,
-                      fontSize: 14, fontWeight: FontWeight.bold)),
+                      fontSize: 13, fontWeight: FontWeight.bold)),
                   Text(reward.description,
                     style: const TextStyle(color: Colors.white38, fontSize: 10),
                     maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -1684,50 +1687,45 @@ class _PlaceDetailSheet extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
+          // Bottom action — compact in both states
           if (isDone)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withOpacity(0.07),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.28)),
-              ),
-              child: const Column(mainAxisSize: MainAxisSize.min, children: [
-                Text('🐱', style: TextStyle(fontSize: 28)),
-                SizedBox(height: 4),
-                Text('Trail done!',
+            // Slim "done" confirmation row
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Text('🐱', style: TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Trail done!',
                   style: TextStyle(
                       color: Color(0xFFFFD700), fontSize: 13, fontWeight: FontWeight.bold)),
-                SizedBox(height: 1),
-                Text('Item added to inventory',
+                const Text('Item added to inventory',
                   style: TextStyle(color: Colors.white38, fontSize: 10)),
               ]),
-            )
+            ])
           else
+            // Compact "I completed this!" button
             GestureDetector(
               onTap: onComplete,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 15),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: place.color,
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(13),
                   boxShadow: [
                     BoxShadow(
-                        color: place.color.withOpacity(0.35),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5)),
+                        color: place.color.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4)),
                   ],
                 ),
                 child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text('🐾', style: TextStyle(fontSize: 18)),
-                  SizedBox(width: 10),
+                  Text('🐾', style: TextStyle(fontSize: 15)),
+                  SizedBox(width: 8),
                   Text('I completed this!',
                     style: TextStyle(
-                        color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
                 ]),
               ),
             ),
@@ -1751,17 +1749,17 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
         decoration: BoxDecoration(
           color: color.withOpacity(0.07),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withOpacity(0.22)),
         ),
         child: Column(children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
-          const SizedBox(height: 4),
+          Text(icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 3),
           Text(value,
-              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
+              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
           Text(label,
               style: const TextStyle(color: Colors.white38, fontSize: 9),
@@ -1771,6 +1769,8 @@ class _StatChip extends StatelessWidget {
     );
   }
 }
+
+// ── Reward burst overlay ──────────────────────────────────────────────────────
 
 class _RewardBurst extends StatelessWidget {
   final ShopItem? item;
@@ -1793,39 +1793,64 @@ class _RewardBurst extends StatelessWidget {
               spreadRadius: 6),
         ],
       ),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Text('🐱', style: TextStyle(fontSize: 52)),
-        const SizedBox(height: 8),
-        const Text('Got some steps in 🚶',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 4),
-        Text(placeName,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
-          textAlign: TextAlign.center),
-        const SizedBox(height: 14),
-        if (item != null) ...[
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              key: itemKey,
-              width: 52, height: 52,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF5CC),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: _RewardItemVisual(item: item!, size: 30),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🐱', style: TextStyle(fontSize: 40)),
+          const SizedBox(height: 4),
+          const Text(
+            'Got some steps in 🚶',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 10),
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(item!.name,
-                style: const TextStyle(
-                    color: Color(0xFFFFD700), fontSize: 18, fontWeight: FontWeight.bold)),
-              const Text('added to inventory',
-                style: TextStyle(color: Colors.white54, fontSize: 11)),
-            ]),
-          ]),
-          const SizedBox(height: 10),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            placeName,
+            style: const TextStyle(color: Colors.white54, fontSize: 10),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          if (item != null) ...[
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  key: itemKey,
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF5CC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _RewardItemVisual(item: item!, size: 24),
+                ),
+                const SizedBox(width: 6),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item!.name,
+                      style: const TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'added to inventory',
+                      style: TextStyle(color: Colors.white54, fontSize: 9),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
