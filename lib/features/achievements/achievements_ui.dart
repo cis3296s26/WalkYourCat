@@ -19,22 +19,41 @@ class AchievementsDialog extends StatelessWidget {
       child: SizedBox(
         width: dialogWidth,
         height: dialogHeight,
-        child: FutureBuilder<List<Achievement>>(
-          future: AchievementsService.instance.getAllAchievements(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return const _AchievementsLoadingCard();
-            }
-
-            final achievements = snapshot.data ?? <Achievement>[];
-            if (achievements.isEmpty) {
-              return const _AchievementsEmptyCard();
-            }
-
-            return _AchievementsModalCard(achievements: achievements);
-          },
+        child: Material(
+          color: const Color(0xFFFFFBF6),
+          borderRadius: const BorderRadius.all(Radius.circular(28)),
+          clipBehavior: Clip.antiAlias,
+          child: const Column(
+            children: [
+              _AchievementsHeader(),
+              Expanded(child: AchievementsContent()),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class AchievementsContent extends StatelessWidget {
+  const AchievementsContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<Achievement>>(
+      future: AchievementsService.instance.getAllAchievements(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const _AchievementsLoadingCard();
+        }
+
+        final achievements = snapshot.data ?? <Achievement>[];
+        if (achievements.isEmpty) {
+          return const _AchievementsEmptyCard();
+        }
+
+        return _AchievementsGrid(achievements: achievements);
+      },
     );
   }
 }
@@ -105,11 +124,7 @@ class _AchievementsLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.all(Radius.circular(28)),
-      child: Center(child: CircularProgressIndicator()),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
@@ -118,86 +133,63 @@ class _AchievementsEmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: const BorderRadius.all(Radius.circular(28)),
-      child: Column(
-        children: [
-          const _AchievementsHeader(),
-          Expanded(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.emoji_events_outlined,
-                      size: 56,
-                      color: Colors.amber.shade200,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No achievements yet',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF3E2723),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Complete daily challenges and your wins will start showing up here.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.emoji_events_outlined,
+              size: 56,
+              color: Colors.amber.shade200,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No achievements yet',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF3E2723),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Complete daily challenges and your wins will start showing up here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _AchievementsModalCard extends StatelessWidget {
-  const _AchievementsModalCard({required this.achievements});
+class _AchievementsGrid extends StatelessWidget {
+  const _AchievementsGrid({required this.achievements});
 
   final List<Achievement> achievements;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFFFFBF6),
-      borderRadius: const BorderRadius.all(Radius.circular(28)),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          const _AchievementsHeader(),
-          Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 0.83,
-              ),
-              itemCount: achievements.length,
-              itemBuilder: (context, index) {
-                return _AchievementCard(achievement: achievements[index]);
-              },
-            ),
-          ),
-        ],
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.83,
       ),
+      itemCount: achievements.length,
+      itemBuilder: (context, index) {
+        return _AchievementCard(achievement: achievements[index]);
+      },
     );
   }
 }
@@ -301,58 +293,10 @@ class _AchievementCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                // const SizedBox(height: 8),
-                // Wrap(
-                //   spacing: 6,
-                //   runSpacing: 6,
-                //   children: [
-                //     // _InfoChip(
-                //     //   label: _labelForType(achievement.type),
-                //     //   background: style.soft,
-                //     //   foreground: style.accent,
-                //     // ),
-                //     // _InfoChip(
-                //     //   label: _countLabel(achievement.completionCount),
-                //     //   background: const Color(0xFFF6F1EA),
-                //     //   foreground: const Color(0xFF8D6E63),
-                //     // ),
-                //   ],
-                // ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.label,
-    required this.background,
-    required this.foreground,
-  });
-
-  final String label;
-  final Color background;
-  final Color foreground;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: foreground,
-        ),
       ),
     );
   }
@@ -416,24 +360,4 @@ class _AchievementsHeader extends StatelessWidget {
       ),
     );
   }
-}
-
-String _labelForType(String type) {
-  switch (type) {
-    case 'walking':
-      return 'Walking';
-    case 'feeding':
-      return 'Feeding';
-    case 'petting':
-      return 'Petting';
-    default:
-      return 'Achievement';
-  }
-}
-
-String _countLabel(int completionCount) {
-  if (completionCount == 1) {
-    return 'Completed once';
-  }
-  return 'Completed $completionCount times';
 }

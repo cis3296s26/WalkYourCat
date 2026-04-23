@@ -4,7 +4,6 @@ import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:walkyourcat/features/achievements/achievements_modal.dart';
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
 import 'package:walkyourcat/features/shop/shop_item.dart';
 import 'package:walkyourcat/steps.dart';
@@ -61,8 +60,6 @@ void main() async {
         await Firebase.initializeApp();
       }
     }
-
-  
   } catch (e, stacktrace) {
     debugPrint('FATAL ERROR: $e');
     debugPrint('STACKTRACE: $stacktrace');
@@ -124,6 +121,49 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class _MenuOption extends StatelessWidget {
+  const _MenuOption({
+    required this.icon,
+    required this.label,
+    this.accent = Colors.deepPurple,
+    this.soft = const Color(0xFFF1EBFF),
+  });
+
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final Color soft;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: soft,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: accent, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2F1F17),
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
 
@@ -167,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {});
   }
 
-  void _runTutorial(){
+  void _runTutorial() {
     tourController.start(context, force: true);
   }
 
@@ -243,7 +283,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openAchievements() {
-    showAchievementsModal(context);
+    showChallengesModal(context, initialTab: 1);
   }
 
   void _openLeaderboard() {
@@ -251,30 +291,49 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _playItemAnimation(String tag) async {
-    /* --- CHANGE CAT ANIMATION BASED ON ITEM EFFECTS --- */
-    // --------- FOOD --------
-    if (tag == 'food') {
-      setState(() {
-        _currentCatImage = 'assets/animations/eating_cat.gif';
-      });
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _currentCatImage = 'assets/animations/idle_cat.gif';
-        });
-      }
-      // --------- TOYS --------
-    } else if (tag == 'fun') {
-      setState(() {
-        _currentCatImage = 'assets/animations/happy_cat.gif';
-      });
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _currentCatImage = 'assets/animations/idle_cat.gif';
-        });
-      }
+    /* --- VARIABLES --- */
+    String animation;
+    // keywords
+    String eating = 'assets/animations/eating_cat.gif';
+    String drinking = 'assets/animations/drinking_cat.gif';
+    String groomed = 'assets/animations/happy_cat.gif';
+    String idle = 'assets/animations/idle_cat.gif';
+    String playing = 'assets/animations/playing_cat.gif';
+
+    /* ------ DECIDING ANIMATION BASED ON TAG ------ */
+    switch (tag) {
+      case 'food':
+        debugPrint('[MAIN - ANI]: Playing food animation');
+        animation = eating;
+      case 'drinks':
+        debugPrint('[MAIN - ANI]: Playing drink animation');
+        animation = drinking;
+      case 'fun':
+        debugPrint('[MAIN - ANI]: Playing fun animation');
+        animation = playing;
+      case 'medicine':
+        debugPrint('[MAIN - ANI]: Playing medicine animation');
+        animation = drinking;
+      case 'cosmetic':
+        debugPrint('[MAIN - ANI]: Playing cosmetic animation');
+        animation = groomed;
+      default:
+        debugPrint('[MAIN - ANI]: No animation for tag: $tag');
+        animation = idle;
     }
+    /* --- END OF DECIDING ANIMATION BASED ON TAG --- */
+
+    // update cat image for 2 seconds, then revert back to idle
+    setState(() {
+      _currentCatImage = animation;
+    });
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      setState(() {
+        _currentCatImage = 'assets/animations/idle_cat.gif';
+      });
+    }
+
   }
 
   String _getBackgroundImageForCurrentTime() {
@@ -387,7 +446,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ListenableBuilder(
                     listenable: CatStatsController.instance,
                     builder: (context, child) {
+                      // situations
                       final isDead = CatStatsController.instance.health <= 0;
+                      final isSick = CatStatsController.instance.health <= 30 && CatStatsController.instance.health > 0;
+                      final isNight = DateTime.now().hour >= 20 || DateTime.now().hour < 5; 
 
                       /* -- IF CAT IS DEAD, SHOW VET -- */
                       if (isDead) {
@@ -397,7 +459,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.95),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.redAccent.shade100, width: 2),
+                            border: Border.all(
+                                color: Colors.redAccent.shade100, width: 2),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.red.withValues(alpha: 0.1),
@@ -408,7 +471,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           ),
                           child: Column(
                             children: [
-                              const Icon(Icons.local_hospital_rounded, color: Colors.redAccent, size: 56),
+                              const Icon(Icons.local_hospital_rounded,
+                                  color: Colors.redAccent, size: 56),
                               const SizedBox(height: 12),
                               const Text(
                                 'AT THE VET',
@@ -422,13 +486,15 @@ class _MyHomePageState extends State<MyHomePage> {
                               const SizedBox(height: 20),
                               ElevatedButton.icon(
                                 onPressed: _payVetBill,
-                                icon: const Icon(Icons.payment_rounded, size: 18),
+                                icon:
+                                    const Icon(Icons.payment_rounded, size: 18),
                                 label: const Text('Pay Bill (2,500)'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.redAccent,
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -436,6 +502,22 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             ],
                           ),
+                        );
+                      }
+
+                      /* -- IF CAT IS SICK, CHANGE ANI -- */
+                      else if (isSick) {
+                        return Image.asset(
+                          'assets/animations/sick_cat.gif',
+                          width: MediaQuery.of(context).size.width * 0.65,
+                        );
+                      }
+
+                      /* -- IF IT'S NIGHT, SHOW SLEEPING ANI -- */
+                      else if (isNight) {
+                        return Image.asset(
+                          'assets/animations/sleeping_cat.gif',
+                          width: MediaQuery.of(context).size.width * 0.65,
                         );
                       }
 
@@ -522,35 +604,69 @@ class _MyHomePageState extends State<MyHomePage> {
               introduce: Text(
                   "This is the menu button! Here you can access your profile, settings, achievements, social features, and tutorial!"),
               child: Positioned(
-                top: 36,
+                top: 30,
                 right: 16,
                 child: PopupMenuButton<SampleItem>(
                   initialValue: _selectedItem,
-                  icon: const Icon(Icons.more_vert),
+                  color: const Color(0xFFFFFBF7),
+                  elevation: 10,
+                  offset: const Offset(0, 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  icon: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.deepPurple,
+                    ),
+                    child: const Icon(
+                      Icons.more_vert,
+                      color: Colors.white,
+                    ),
+                  ),
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<SampleItem>>[
                     const PopupMenuItem<SampleItem>(
                       value: SampleItem.optionOne,
-                      child: Text('Settings'),
+                      child: _MenuOption(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                      ),
                     ),
                     const PopupMenuItem<SampleItem>(
                       value: SampleItem.optionTwo,
-                      child: Text('Profile/Account'),
+                      child: _MenuOption(
+                        icon: Icons.person_rounded,
+                        label: 'Profile',
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionThree,
                       onTap: _openLeaderboard,
-                      child: Text('Leaderboard'),
+                      child: const _MenuOption(
+                        icon: Icons.leaderboard_rounded,
+                        label: 'Leaderboard',
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionFour,
                       onTap: _openAchievements,
-                      child: Text('Achievements'),
+                      child: const _MenuOption(
+                        icon: Icons.emoji_events_rounded,
+                        label: 'Achievements',
+                        accent: Color(0xFFE7A100),
+                        soft: Color(0xFFFFF1D6),
+                      ),
                     ),
                     PopupMenuItem<SampleItem>(
                       value: SampleItem.optionFive,
                       onTap: _runTutorial,
-                      child: Text('Tutorial'),
+                      child: const _MenuOption(
+                        icon: Icons.school_rounded,
+                        label: 'Tutorial',
+                      ),
                     )
                   ],
                 ),
