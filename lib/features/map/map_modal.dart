@@ -13,13 +13,11 @@ import '../shop/shop_item.dart';
 import '../shop/shop_service.dart';
 import '../inventory/inventory_service.dart';
 import 'map_service.dart';
-// import 'location_cache_service.dart';
 
 
 const _geoapifyApiKey = 'bcbd88fabee5488493869a851cca70b5';
 
 final _service = LocationDbService();
-// final _service = LocationCacheService();
 
 enum TrailStatus { locked, active, completed }
 
@@ -52,7 +50,6 @@ extension DistanceFilterX on DistanceFilter {
   }
 }
 
-// NearbyPlace model
 class NearbyPlace {
   final String id;
   final String name;
@@ -90,9 +87,7 @@ class NearbyPlace {
   }
 
   double get perimeterMiles => perimeterMeters / 1609.344;
-
   int get estimatedMinutes => (perimeterMeters / 80).ceil().clamp(1, 999);
-
   int get estimatedSteps => (perimeterMiles * 2112).round().clamp(100, 999999);
 
   String get distanceLabel {
@@ -134,12 +129,11 @@ class NearbyPlace {
   }
 }
 
-// Persistence
 class _TrailPersistence {
-  static const _kDateKey    = 'trail_date';
-  static const _kIdsKey     = 'trail_completed_ids';
-  static const _kRewardPfx  = 'trail_reward_';
-  static const _kFilterKey  = 'trail_distance_filter';
+  static const _kDateKey   = 'trail_date';
+  static const _kIdsKey    = 'trail_completed_ids';
+  static const _kRewardPfx = 'trail_reward_';
+  static const _kFilterKey = 'trail_distance_filter';
 
   static String _today() {
     final n = DateTime.now();
@@ -192,55 +186,37 @@ class _TrailPersistence {
   }
 }
 
-// trail cache
-// round coords to ~1km grid so nearby opens hit the same cache bucket
 String _cacheKey(LatLng center) {
   final lat = (center.latitude  * 100).round() / 100;
   final lon = (center.longitude * 100).round() / 100;
   return 'trail_cache_${lat}_$lon';
 }
 
-const _kCacheTimeKey = 'trail_cache_time'; // stores epoch ms of last fetch
-
-// how long before we consider the cache stale and re-fetch (24 hours)
+const _kCacheTimeKey = 'trail_cache_time';
 const _kCacheTtl = Duration(hours: 24);
 
-// save raw geojson string + timestamp to prefs
 Future<void> _saveCache(String key, String body) async {
   final prefs = await SharedPreferences.getInstance();
   await prefs.setString(key, body);
   await prefs.setInt(_kCacheTimeKey, DateTime.now().millisecondsSinceEpoch);
 }
 
-// load cached geojson if it's still fresh, returns null if stale/missing
 Future<String?> _loadCache(String key) async {
   final prefs = await SharedPreferences.getInstance();
   final savedAt = prefs.getInt(_kCacheTimeKey);
   if (savedAt == null) return null;
-
   final age = DateTime.now().millisecondsSinceEpoch - savedAt;
   if (age > _kCacheTtl.inMilliseconds) {
     debugPrint('[map] cache expired, gonna re-fetch');
     return null;
   }
-
   final body = prefs.getString(key);
   if (body == null || body.isEmpty) return null;
-
   debugPrint('[map] cache hit! skipping api call 🎉');
   return body;
 }
 
-// GEOAPIFY fetch docs: https://apidocs.geoapify.com/docs/places/
-// quick flow:
-//   1. check cache, if we have fresh data for this area, use it (instant)
-//   2. otherwise hit geoapify places api to get parks/trails nearby
-//   3. parse the geojson into NearbyPlace objects with boundaries
-//   4. if geoapify fails for any reason, fall back to overpass (slower but reliable)
-//   5. save result to cache so next open is instant
 Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
-  // these are the geoapify place categories we care about — parks, nature, leisure
-  // full list at: https://apidocs.geoapify.com/docs/places/#categories
   final categories = [
     'leisure.park',
     'leisure.park.nature_reserve',
@@ -256,21 +232,16 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 
   final lat = center.latitude;
   final lon = center.longitude;
-  const radiusMeters = 8000; // ~5 miles
+  const radiusMeters = 8000;
 
-  //step 1: try cache first
   final cacheKey = _cacheKey(center);
   final cached = await _loadCache(cacheKey);
 
   String responseBody;
 
   if (cached != null) {
-    // we have fresh cached data. skip the network call entirely
     responseBody = cached;
   } else {
-    //  step 2: hit the api
-    // note: geoapify uses "apiKey" (camelCase) as the query param name
-    // and the filter format is "circle:lon,lat,radiusMeters" (lon comes first!)
     final uri = Uri(
       scheme: 'https',
       host: 'api.geoapify.com',
@@ -290,7 +261,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     try {
       response = await http.get(uri).timeout(const Duration(seconds: 10));
     } catch (e) {
-      // network died or timed out, overpass fallback will be our savior
       debugPrint('[map] geoapify request threw: $e');
       return _fetchNearbyPlacesOverpassFallback(center);
     }
@@ -306,13 +276,10 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     }
 
     responseBody = response.body;
-
-    // step 3: cache it for next time 
     await _saveCache(cacheKey, responseBody);
     debugPrint('[map] cached geoapify response for next open');
   }
 
-  //  step 4: parse the geojson
   Map<String, dynamic> data;
   try {
     data = jsonDecode(responseBody) as Map<String, dynamic>;
@@ -323,7 +290,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
 
   final features = (data['features'] as List<dynamic>?) ?? [];
 
-  // colors we cycle through for each trail/park on the map
   const colors = [
     Color(0xFF2ECC71), Color(0xFF3498DB), Color(0xFFE67E22),
     Color(0xFF9B59B6), Color(0xFFE74C3C), Color(0xFF1ABC9C),
@@ -338,19 +304,16 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
   for (final feature in features) {
     final props = (feature['properties'] as Map<String, dynamic>?) ?? {};
 
-    // grab the name, fall back to generated label from category
     String name = props['name'] as String? ?? '';
     if (name.isEmpty) {
       final cats = (props['categories'] as List<dynamic>?)?.cast<String>() ?? [];
       name = _labelFromCategories(cats);
-      if (name.isEmpty) continue; // no name and no useful category? skip it
+      if (name.isEmpty) continue;
     }
 
-    // figure out what "type" to show in the ui (park / trail / nature etc.)
     final cats = (props['categories'] as List<dynamic>?)?.cast<String>() ?? [];
     final typeLabel = _typeFromCategories(cats);
 
-    // parse the geometry — geoapify can return Point, Polygon, LineString, etc.
     final geometry = feature['geometry'] as Map<String, dynamic>?;
     if (geometry == null) continue;
 
@@ -375,7 +338,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
       final avgLon = boundary.map((p) => p.longitude).reduce((a,b)=>a+b) / boundary.length;
       placeCenter = LatLng(avgLat, avgLon);
     } else {
-      // LineString or MultiPolygon — flatten to a list of points
       boundary = _flattenGeometry(geometry);
       if (boundary.isEmpty) continue;
       final avgLat = boundary.map((p) => p.latitude).reduce((a,b)=>a+b) / boundary.length;
@@ -383,14 +345,12 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
       placeCenter = LatLng(avgLat, avgLon);
     }
 
-    // skip anything tiny — less than 160m perimeter isn't really walkable
     double totalM = 0;
     for (int i = 0; i < boundary.length - 1; i++) {
       totalM += distCalc.as(LengthUnit.Meter, boundary[i], boundary[i+1]);
     }
     if (totalM < 160) continue;
 
-    // stable id — prefer geoapify's place_id, fall back to osm id or a hash
     final placeId = props['place_id'] as String?
         ?? props['osm_id']?.toString()
         ?? 'geo-${props['name']}-$colorIndex';
@@ -408,7 +368,6 @@ Future<List<NearbyPlace>> fetchNearbyPlaces(LatLng center) async {
     if (places.length >= 150) break;
   }
 
-  // sort by distance so closest trails show up first in the list
   places.sort((a, b) =>
     distCalc.as(LengthUnit.Meter, center, a.center)
         .compareTo(distCalc.as(LengthUnit.Meter, center, b.center)));
@@ -426,7 +385,6 @@ List<LatLng> _syntheticCircle(LatLng center, double radiusMeters) {
   });
 }
 
-// estimate radius from the place's bounding box — bigger bbox = bigger circle
 double _radiusFromProps(Map<String, dynamic> props) {
   final bbox = props['bbox'] as Map<String, dynamic>?;
   if (bbox != null) {
@@ -438,10 +396,9 @@ double _radiusFromProps(Map<String, dynamic> props) {
     final diag = d.as(LengthUnit.Meter, LatLng(lat1, lon1), LatLng(lat2, lon2));
     return (diag / 2).clamp(80, 2000);
   }
-  return 200; // default to 200m if we have no bbox info
+  return 200;
 }
 
-// map geoapify category strings
 String _labelFromCategories(List<String> cats) {
   if (cats.any((c) => c.contains('nature_reserve'))) return 'Nature Reserve';
   if (cats.any((c) => c.contains('park')))           return 'Park';
@@ -454,15 +411,13 @@ String _labelFromCategories(List<String> cats) {
   return '';
 }
 
-// map categories to the type badge shown in the ui card
 String _typeFromCategories(List<String> cats) {
   if (cats.any((c) => c.contains('nature_reserve') || c.contains('forest'))) return 'nature';
-  if (cats.any((c) => c.contains('park')))    return 'park';
-  if (cats.any((c) => c.contains('pitch')))   return 'trail';
+  if (cats.any((c) => c.contains('park')))  return 'park';
+  if (cats.any((c) => c.contains('pitch'))) return 'trail';
   return 'park';
 }
 
-// flatten weird geometry types (LineString, MultiPolygon) into a simple point list
 List<LatLng> _flattenGeometry(Map<String, dynamic> geometry) {
   final type   = geometry['type'] as String? ?? '';
   final coords = geometry['coordinates'];
@@ -483,8 +438,7 @@ List<LatLng> _flattenGeometry(Map<String, dynamic> geometry) {
   } catch (_) {}
   return [];
 }
-// Overpass fallback
-// Only called if Geoapify is unavailable.
+
 const _overpassEndpoints = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
@@ -496,7 +450,6 @@ Future<List<NearbyPlace>> _fetchNearbyPlacesOverpassFallback(LatLng center) asyn
   final lat = center.latitude;
   final lon = center.longitude;
 
-  // Leaner query: only named parks + paths, shorter timeout.
   final query =
       '[out:json][timeout:10];'
       '('
@@ -602,7 +555,7 @@ void showMapModal(
     context: context,
     builder: (context) {
       final screenSize = MediaQuery.of(context).size;
-      final dialogWidth = screenSize.width < 600 ? screenSize.width * 0.90 : 400.0;
+      final dialogWidth  = screenSize.width  < 600 ? screenSize.width  * 0.90 : 400.0;
       final dialogHeight = screenSize.height < 760 ? screenSize.height * 0.80 : 500.0;
 
       return Dialog(
@@ -668,18 +621,16 @@ class _MapModalServiceState extends State<MapModalService>
 
   NearbyPlace? _selectedPlace;
 
-  // Reward overlay
-  bool     _showReward    = false;
+  bool      _showReward     = false;
   ShopItem? _rewardItem;
-  String   _rewardPlaceName = '';
+  String    _rewardPlaceName = '';
 
   late AnimationController _rewardAnim;
   late Animation<double>   _rewardScale;
   late Animation<double>   _rewardOpacity;
 
-  // Detail sheet animation
   late AnimationController _sheetAnim;
-  late Animation<double>   _sheetSlide;
+  late CurvedAnimation     _sheetSlide; // typed as CurvedAnimation so we can dispose it
 
   @override
   void initState() {
@@ -689,14 +640,38 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   void _setupAnimations() {
-    _rewardAnim = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
-    _rewardScale   = Tween<double>(begin: 0.3, end: 1.0).animate(
-        CurvedAnimation(parent: _rewardAnim, curve: Curves.elasticOut));
-    _rewardOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-        CurvedAnimation(parent: _rewardAnim, curve: const Interval(0.65, 1.0, curve: Curves.easeOut)));
+    _rewardAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
 
-    _sheetAnim  = AnimationController(vsync: this, duration: const Duration(milliseconds: 320));
-    _sheetSlide = CurvedAnimation(parent: _sheetAnim, curve: Curves.easeOutCubic);
+    _rewardScale = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _rewardAnim, curve: Curves.elasticOut),
+    );
+
+    _rewardOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _rewardAnim,
+        curve: const Interval(0.65, 1.0, curve: Curves.easeOut),
+      ),
+    );
+
+    _rewardAnim.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        setState(() => _showReward = false);
+        _rewardAnim.reset(); // ready for the next reward
+      }
+    });
+
+    _sheetAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+
+    _sheetSlide = CurvedAnimation(
+      parent: _sheetAnim,
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _initApp() async {
@@ -708,7 +683,9 @@ class _MapModalServiceState extends State<MapModalService>
 
   void _applyFilter() {
     setState(() {
-      _filteredPlaces = _allPlaces.where((p) => _activeFilter.matches(p.perimeterMiles)).toList();
+      _filteredPlaces = _allPlaces
+          .where((p) => _activeFilter.matches(p.perimeterMiles))
+          .toList();
     });
   }
 
@@ -754,7 +731,7 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   Future<void> _initLocation() async {
-    bool hasPermission = await GeoService.instance.checkLocationPermission();
+    final hasPermission = await GeoService.instance.checkLocationPermission();
     if (!hasPermission) {
       setState(() { _loadingMsg = 'Location permission denied'; _loading = false; });
       return;
@@ -826,30 +803,35 @@ class _MapModalServiceState extends State<MapModalService>
 
   Future<void> _awardItem(NearbyPlace place) async {
     await _TrailPersistence.markCompleted(place.id, rewardItemId: place.rewardItem?.id);
-    if (place.rewardItem != null) await InventoryService.instance.addItem(place.rewardItem!);
+    if (place.rewardItem != null) {
+      await InventoryService.instance.addItem(place.rewardItem!);
+    }
     if (!mounted) return;
+
     setState(() {
-      _rewardItem = place.rewardItem;
+      _rewardItem     = place.rewardItem;
       _rewardPlaceName = place.name;
-      _showReward = true;
+      _showReward     = true;
     });
 
-    final runAnimation = widget.runAddToCartAnimation;
-    if (place.rewardItem != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || !_showReward) return;
-        if (widget.inventoryTargetKey != null) unawaited(_runRewardFlight());
-        else if (runAnimation != null) unawaited(runAnimation(_rewardItemKey));
-      });
-    }
-    _rewardAnim.forward(from: 0).then((_) {
-      if (mounted) setState(() => _showReward = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_showReward) return;
+      if (widget.inventoryTargetKey != null && place.rewardItem != null) {
+        unawaited(_runRewardFlight());
+      } else if (widget.runAddToCartAnimation != null && place.rewardItem != null) {
+        unawaited(widget.runAddToCartAnimation!(_rewardItemKey));
+      }
     });
+
+    _rewardAnim.forward(from: 0);
   }
 
   void _manualComplete(NearbyPlace place) {
     if (place.status == TrailStatus.completed) return;
-    setState(() { place.status = TrailStatus.completed; place.walkedFraction = 1.0; });
+    setState(() {
+      place.status = TrailStatus.completed;
+      place.walkedFraction = 1.0;
+    });
     _awardItem(place);
   }
 
@@ -866,69 +848,87 @@ class _MapModalServiceState extends State<MapModalService>
   }
 
   Future<void> _runRewardFlight() async {
+    // Wait one extra frame so the reward widget is fully laid out
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
 
     final srcBounds = _globalPaintBounds(_rewardItemKey);
-    final tgtBounds = widget.inventoryTargetKey == null 
-        ? null 
+    final tgtBounds = widget.inventoryTargetKey == null
+        ? null
         : _globalPaintBounds(widget.inventoryTargetKey!);
 
     if (srcBounds == null || tgtBounds == null) {
-      debugPrint("Animation skipped: Bounds not found. Src: $srcBounds, Tgt: $tgtBounds");
+      debugPrint('[map] Flight skipped — bounds not ready. src=$srcBounds tgt=$tgtBounds');
       return;
     }
 
     final item = _rewardItem;
-    final overlay = Overlay.of(context, rootOverlay: true);
     if (item == null) return;
 
-    final ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 850));
+    final ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 850),
+    );
     final anim = CurvedAnimation(parent: ctrl, curve: Curves.easeInOutCubic);
-    
-    late OverlayEntry entry;
-    entry = OverlayEntry(builder: (_) => AnimatedBuilder(
-      animation: anim,
-      builder: (ctx, child) {
-        final rect = Rect.lerp(srcBounds, tgtBounds, anim.value)!;
-        final lift = 40 * (1 - (2 * anim.value - 1).abs()); 
-        
-        return Positioned(
-          left: rect.left, 
-          top: rect.top - lift,
-          width: rect.width, 
-          height: rect.height,
-          child: IgnorePointer(
-            child: Transform.scale(
-              scale: 1 - (anim.value * 0.3), 
-              child: child,
-            ),
-          ),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF5CC),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFD700), width: 2),
-        ),
-        child: Center(child: _RewardItemVisual(item: item, size: 30)),
-      ),
-    ));
 
+    OverlayEntry? entry; 
+    entry = OverlayEntry(
+      builder: (_) => AnimatedBuilder(
+        animation: anim,
+        builder: (ctx, child) {
+          final rect = Rect.lerp(srcBounds, tgtBounds, anim.value)!;
+          // Arc: lift peaks at the midpoint of the flight
+          final lift = 40.0 * (1.0 - (2.0 * anim.value - 1.0).abs());
+
+          return Positioned(
+            left:   rect.left,
+            top:    rect.top - lift,
+            width:  rect.width,
+            height: rect.height,
+            child: IgnorePointer(
+              child: Opacity(
+                // FIX: fade out during the last 20% of the flight
+                opacity: anim.value < 0.8 ? 1.0 : (1.0 - anim.value) / 0.2,
+                child: Transform.scale(
+                  scale: 1.0 - (anim.value * 0.3),
+                  child: child,
+                ),
+              ),
+            ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF5CC),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFFD700), width: 2),
+          ),
+          child: Center(child: _RewardItemVisual(item: item, size: 30)),
+        ),
+      ),
+    );
+
+    final overlay = Overlay.of(context, rootOverlay: true);
     overlay.insert(entry);
-    await ctrl.forward();
-    entry.remove();
-    ctrl.dispose();
+
+    try {
+      await ctrl.forward();
+    } finally {
+      entry.remove();
+      ctrl.dispose();
+      anim.dispose();
+    }
   }
+
   Rect? _globalPaintBounds(GlobalKey key) {
-    final RenderBox? renderBox = key.currentContext?.findRenderObject() as RenderBox?;
+    final renderBox = key.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null || !renderBox.hasSize) return null;
-    
     final offset = renderBox.localToGlobal(Offset.zero);
     return offset & renderBox.size;
   }
-  int get _completedCount => _allPlaces.where((p) => p.status == TrailStatus.completed).length;
+
+  int get _completedCount =>
+      _allPlaces.where((p) => p.status == TrailStatus.completed).length;
 
   List<NearbyPlace> get _tabPlaces {
     if (_activeTab == _BottomTab.done) {
@@ -943,6 +943,7 @@ class _MapModalServiceState extends State<MapModalService>
     _service.stop();
     _rewardAnim.dispose();
     _sheetAnim.dispose();
+    _sheetSlide.dispose(); 
     super.dispose();
   }
 
@@ -956,6 +957,7 @@ class _MapModalServiceState extends State<MapModalService>
       ],
     );
   }
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 12, 12),
@@ -980,9 +982,7 @@ class _MapModalServiceState extends State<MapModalService>
               const Text('Cat walks',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
               Text(
-                _loading
-                    ? 'Loading…'
-                    : '$_completedCount completed today',
+                _loading ? 'Loading…' : '$_completedCount completed today',
                 style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.4)),
               ),
             ],
@@ -1003,10 +1003,10 @@ class _MapModalServiceState extends State<MapModalService>
       ),
     );
   }
+
   Widget _buildMapArea() {
     return Stack(
       children: [
-        // Map
         FlutterMap(
           mapController: _mapController,
           options: MapOptions(
@@ -1061,8 +1061,8 @@ class _MapModalServiceState extends State<MapModalService>
                   ),
                 ),
                 ..._otherUsers.map((user) {
-                  final lat = (user['lat'] as num?)?.toDouble() ?? 0.0;
-                  final lng = (user['lng'] as num?)?.toDouble() ?? 0.0;
+                  final lat  = (user['lat']  as num?)?.toDouble() ?? 0.0;
+                  final lng  = (user['lng']  as num?)?.toDouble() ?? 0.0;
                   final name = (user['name'] ?? user['username'] ?? '').toString();
                   return Marker(
                     point: LatLng(lat, lng),
@@ -1078,7 +1078,8 @@ class _MapModalServiceState extends State<MapModalService>
                             border: Border.all(color: Colors.white12),
                           ),
                           child: Text(name,
-                              style: const TextStyle(color: Colors.white60, fontSize: 8, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                  color: Colors.white60, fontSize: 8, fontWeight: FontWeight.bold),
                               overflow: TextOverflow.ellipsis),
                         ),
                     ]),
@@ -1086,26 +1087,29 @@ class _MapModalServiceState extends State<MapModalService>
                 }),
               ],
             ),
-            RichAttributionWidget(attributions: [TextSourceAttribution('OpenStreetMap contributors')]),
+            RichAttributionWidget(
+              attributions: [TextSourceAttribution('OpenStreetMap contributors')],
+            ),
           ],
         ),
 
-        // Loading overlay
         if (_loading)
           Container(
             color: const Color(0xFF0D1821).withOpacity(0.88),
             child: Center(
               child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const CircularProgressIndicator(color: Color(0xFF2ECC71), strokeWidth: 2.5),
+                const CircularProgressIndicator(
+                    color: Color(0xFF2ECC71), strokeWidth: 2.5),
                 const SizedBox(height: 16),
-                Text(_loadingMsg, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                Text(_loadingMsg,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
                 const SizedBox(height: 4),
-                const Text('(powered by Geoapify)', style: TextStyle(color: Colors.white24, fontSize: 10)),
+                const Text('(powered by Geoapify)',
+                    style: TextStyle(color: Colors.white24, fontSize: 10)),
               ]),
             ),
           ),
 
-        // Locate button
         if (!_loading)
           Positioned(
             top: 12, left: 12,
@@ -1118,12 +1122,13 @@ class _MapModalServiceState extends State<MapModalService>
                   borderRadius: BorderRadius.circular(11),
                   border: Border.all(color: Colors.white.withOpacity(0.12)),
                 ),
-                child: const Icon(Icons.my_location, color: Color(0xFF2ECC71), size: 18),
+                child: const Icon(Icons.my_location,
+                    color: Color(0xFF2ECC71), size: 18),
               ),
             ),
           ),
 
-        // Distance filter bar
+        // ── Distance filter bar ───────────────────────────────────────────────
         if (!_loading)
           Positioned(
             top: 12, left: 58, right: 12,
@@ -1134,7 +1139,6 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // Empty state
         if (!_loading && _filteredPlaces.isEmpty)
           Positioned(
             top: 62, left: 16, right: 16,
@@ -1155,7 +1159,6 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // Detail sheet (slide up from map bottom)
         if (_selectedPlace != null)
           Positioned(
             bottom: 0, left: 0, right: 0,
@@ -1176,7 +1179,6 @@ class _MapModalServiceState extends State<MapModalService>
             ),
           ),
 
-        // Reward burst
         if (_showReward)
           Center(
             child: AnimatedBuilder(
@@ -1207,7 +1209,6 @@ class _MapModalServiceState extends State<MapModalService>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Tab bar
           Row(
             children: [
               _TabButton(
@@ -1222,7 +1223,6 @@ class _MapModalServiceState extends State<MapModalService>
               ),
             ],
           ),
-          // Trail list
           SizedBox(
             height: 172,
             child: _tabPlaces.isEmpty
@@ -1349,7 +1349,8 @@ class _DistanceFilterBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(7),
             ),
             child: Text('$filteredCount',
-              style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+              style: const TextStyle(
+                  color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1357,7 +1358,6 @@ class _DistanceFilterBar extends StatelessWidget {
   }
 }
 
-// Map pin label shown above each trail centre.
 class _PlacePin extends StatelessWidget {
   final NearbyPlace place;
   final bool isSelected;
@@ -1365,8 +1365,8 @@ class _PlacePin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDone  = place.status == TrailStatus.completed;
-    final color   = isDone ? const Color(0xFFFFD700) : place.color;
+    final isDone = place.status == TrailStatus.completed;
+    final color  = isDone ? const Color(0xFFFFD700) : place.color;
 
     return Column(mainAxisSize: MainAxisSize.min, children: [
       AnimatedContainer(
@@ -1409,8 +1409,7 @@ class _PlacePin extends StatelessWidget {
               width: 52,
               child: Text(place.rewardItem!.name,
                 maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold),
-              ),
+                style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)),
             ),
           ]),
         ),
@@ -1418,7 +1417,6 @@ class _PlacePin extends StatelessWidget {
   }
 }
 
-// Compact trail row inside the bottom panel list.
 class _TrailRow extends StatelessWidget {
   final NearbyPlace place;
   final bool isSelected;
@@ -1439,28 +1437,29 @@ class _TrailRow extends StatelessWidget {
             : Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: isSelected ? place.color.withOpacity(0.5) : Colors.white.withOpacity(0.07),
+          color: isSelected
+              ? place.color.withOpacity(0.5)
+              : Colors.white.withOpacity(0.07),
           width: isSelected ? 1.5 : 0.5,
         ),
       ),
       child: Row(children: [
-        // Color bar
         Container(
           width: 3, height: 38,
           decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
         ),
         const SizedBox(width: 10),
-        // Info
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(place.name,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
-              overflow: TextOverflow.ellipsis,
-            ),
+              style: const TextStyle(
+                  fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+              overflow: TextOverflow.ellipsis),
             const SizedBox(height: 2),
             Row(children: [
               Text(place.type.toUpperCase(),
-                style: TextStyle(fontSize: 9, color: color.withOpacity(0.8), letterSpacing: 0.6)),
+                style: TextStyle(
+                    fontSize: 9, color: color.withOpacity(0.8), letterSpacing: 0.6)),
               const SizedBox(width: 8),
               Text(place.distanceLabel,
                 style: const TextStyle(fontSize: 9, color: Colors.white38)),
@@ -1483,7 +1482,6 @@ class _TrailRow extends StatelessWidget {
           ]),
         ),
         const SizedBox(width: 10),
-        // Right side
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -1513,7 +1511,8 @@ class _TrailRow extends StatelessWidget {
                 color: isDone
                     ? const Color(0xFFFFD700)
                     : place.status == TrailStatus.active
-                        ? place.color : Colors.white54,
+                        ? place.color
+                        : Colors.white54,
               ),
             ),
           ),
@@ -1526,7 +1525,8 @@ class _TrailRow extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 68),
                 child: Text(reward.name,
                   overflow: TextOverflow.ellipsis, maxLines: 1,
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: color)),
+                  style: TextStyle(
+                      fontSize: 9, fontWeight: FontWeight.bold, color: color)),
               ),
             ]),
           ],
@@ -1536,186 +1536,203 @@ class _TrailRow extends StatelessWidget {
   }
 }
 
-// Slide-up detail sheet that appears over the map.
 class _PlaceDetailSheet extends StatelessWidget {
   final NearbyPlace place;
   final VoidCallback onClose;
   final VoidCallback onComplete;
-  const _PlaceDetailSheet({required this.place, required this.onClose, required this.onComplete});
+  const _PlaceDetailSheet({
+    required this.place,
+    required this.onClose,
+    required this.onComplete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDone  = place.status == TrailStatus.completed;
-    final reward  = place.rewardItem;
-    final color   = isDone ? const Color(0xFFFFD700) : place.color;
+    final isDone = place.status == TrailStatus.completed;
+    final reward = place.rewardItem;
+    final color  = isDone ? const Color(0xFFFFD700) : place.color;
 
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF111D2B),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: Colors.white.withOpacity(0.09))),
-        boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 20, spreadRadius: 2)],
+        boxShadow: const [
+          BoxShadow(color: Colors.black45, blurRadius: 20, spreadRadius: 2),
+        ],
       ),
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
-      child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Handle + close
-        Row(children: [
-          Expanded(child: Center(
-            child: Container(
-              width: 36, height: 4,
-              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)),
-            ),
-          )),
-          GestureDetector(
-            onTap: onClose,
-            child: Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.07),
-                borderRadius: BorderRadius.circular(8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Expanded(child: Center(
+              child: Container(
+                width: 36, height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.white24, borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Icon(Icons.close_rounded, color: Colors.white38, size: 15),
-            ),
-          ),
-        ]),
-        const SizedBox(height: 14),
-
-        // Title row
-        Row(children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(place.name,
-              style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
-          if (isDone)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withOpacity(0.13),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFFFD700)),
+            )),
+            GestureDetector(
+              onTap: onClose,
+              child: Container(
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.07),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.close_rounded, color: Colors.white38, size: 15),
               ),
-              child: const Text('✓ Done',
-                style: TextStyle(color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.bold)),
             ),
-        ]),
-        const SizedBox(height: 3),
-        Text(place.type.toUpperCase(),
-          style: TextStyle(fontSize: 10, letterSpacing: 1.2, color: color.withOpacity(0.75))),
-        const SizedBox(height: 16),
-
-        // Stats
-        Row(children: [
-          _StatChip(
-            icon: '⏱️', label: 'Est. time',
-            value: place.estimatedMinutes < 60
-                ? '${place.estimatedMinutes} min'
-                : '${(place.estimatedMinutes/60).toStringAsFixed(1)} hr',
-            color: color,
-          ),
-          const SizedBox(width: 8),
-          _StatChip(
-            icon: '👟', label: 'Est. steps',
-            value: place.estimatedSteps >= 1000
-                ? '~${(place.estimatedSteps/1000).toStringAsFixed(1)}k'
-                : '${place.estimatedSteps}',
-            color: color,
-          ),
-          const SizedBox(width: 8),
-          _StatChip(icon: '📏', label: 'Distance', value: place.distanceLabel, color: color),
-        ]),
-
-        // Progress bar (active only)
-        if (!isDone && place.status == TrailStatus.active) ...[
-          const SizedBox(height: 14),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Progress', style: TextStyle(color: Colors.white54, fontSize: 12)),
-            Text('${(place.walkedFraction * 100).round()}%',
-              style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           ]),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: place.walkedFraction,
-              backgroundColor: Colors.white10,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 7,
-            ),
-          ),
-        ],
-
-        // Reward
-        if (reward != null) ...[
           const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.07),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: color.withOpacity(0.3)),
+
+          Row(children: [
+            Container(
+                width: 10, height: 10,
+                decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(place.name,
+                style: const TextStyle(
+                    fontSize: 19, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
-            child: Row(children: [
-              Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 22)),
-              const SizedBox(width: 10),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(isDone ? 'Collected!' : 'Reward',
-                  style: TextStyle(color: isDone ? const Color(0xFFFFD700) : Colors.white54, fontSize: 10)),
-                Text(reward.name,
+            if (isDone)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700).withOpacity(0.13),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFFD700)),
+                ),
+                child: const Text('✓ Done',
                   style: TextStyle(
-                    color: isDone ? const Color(0xFFFFD700) : Colors.white,
-                    fontSize: 14, fontWeight: FontWeight.bold)),
-                Text(reward.description,
-                  style: const TextStyle(color: Colors.white38, fontSize: 10),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-              ])),
-            ]),
-          ),
-        ],
-
-        const SizedBox(height: 16),
-
-        // CTA
-        if (isDone)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFD700).withOpacity(0.07),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.28)),
-            ),
-            child: const Column(mainAxisSize: MainAxisSize.min, children: [
-              Text('🐱', style: TextStyle(fontSize: 28)),
-              SizedBox(height: 4),
-              Text('Trail done!',
-                style: TextStyle(color: Color(0xFFFFD700), fontSize: 13, fontWeight: FontWeight.bold)),
-              SizedBox(height: 1),
-              Text('Item added to inventory',
-                style: TextStyle(color: Colors.white38, fontSize: 10)),
-            ]),
-          )
-        else
-          GestureDetector(
-            onTap: onComplete,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              decoration: BoxDecoration(
-                color: place.color,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [BoxShadow(color: place.color.withOpacity(0.35), blurRadius: 14, offset: const Offset(0,5))],
+                      color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.bold)),
               ),
-              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text('🐾', style: TextStyle(fontSize: 18)),
-                SizedBox(width: 10),
-                Text('I completed this!',
-                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+          ]),
+          const SizedBox(height: 3),
+          Text(place.type.toUpperCase(),
+            style: TextStyle(fontSize: 10, letterSpacing: 1.2, color: color.withOpacity(0.75))),
+          const SizedBox(height: 16),
+
+          Row(children: [
+            _StatChip(
+              icon: '⏱️', label: 'Est. time',
+              value: place.estimatedMinutes < 60
+                  ? '${place.estimatedMinutes} min'
+                  : '${(place.estimatedMinutes/60).toStringAsFixed(1)} hr',
+              color: color,
+            ),
+            const SizedBox(width: 8),
+            _StatChip(
+              icon: '👟', label: 'Est. steps',
+              value: place.estimatedSteps >= 1000
+                  ? '~${(place.estimatedSteps/1000).toStringAsFixed(1)}k'
+                  : '${place.estimatedSteps}',
+              color: color,
+            ),
+            const SizedBox(width: 8),
+            _StatChip(icon: '📏', label: 'Distance', value: place.distanceLabel, color: color),
+          ]),
+
+          if (!isDone && place.status == TrailStatus.active) ...[
+            const SizedBox(height: 14),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              const Text('Progress', style: TextStyle(color: Colors.white54, fontSize: 12)),
+              Text('${(place.walkedFraction * 100).round()}%',
+                style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
+            ]),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: place.walkedFraction,
+                backgroundColor: Colors.white10,
+                valueColor: AlwaysStoppedAnimation<Color>(color),
+                minHeight: 7,
+              ),
+            ),
+          ],
+
+          if (reward != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: color.withOpacity(0.3)),
+              ),
+              child: Row(children: [
+                Text(_tagEmoji(reward.tag), style: const TextStyle(fontSize: 22)),
+                const SizedBox(width: 10),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(isDone ? 'Collected!' : 'Reward',
+                    style: TextStyle(
+                        color: isDone ? const Color(0xFFFFD700) : Colors.white54,
+                        fontSize: 10)),
+                  Text(reward.name,
+                    style: TextStyle(
+                      color: isDone ? const Color(0xFFFFD700) : Colors.white,
+                      fontSize: 14, fontWeight: FontWeight.bold)),
+                  Text(reward.description,
+                    style: const TextStyle(color: Colors.white38, fontSize: 10),
+                    maxLines: 1, overflow: TextOverflow.ellipsis),
+                ])),
               ]),
             ),
-          ),
-      ]),
+          ],
+
+          const SizedBox(height: 16),
+
+          if (isDone)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFD700).withOpacity(0.07),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.28)),
+              ),
+              child: const Column(mainAxisSize: MainAxisSize.min, children: [
+                Text('🐱', style: TextStyle(fontSize: 28)),
+                SizedBox(height: 4),
+                Text('Trail done!',
+                  style: TextStyle(
+                      color: Color(0xFFFFD700), fontSize: 13, fontWeight: FontWeight.bold)),
+                SizedBox(height: 1),
+                Text('Item added to inventory',
+                  style: TextStyle(color: Colors.white38, fontSize: 10)),
+              ]),
+            )
+          else
+            GestureDetector(
+              onTap: onComplete,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                decoration: BoxDecoration(
+                  color: place.color,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                        color: place.color.withOpacity(0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5)),
+                  ],
+                ),
+                child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text('🐾', style: TextStyle(fontSize: 18)),
+                  SizedBox(width: 10),
+                  Text('I completed this!',
+                    style: TextStyle(
+                        color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                ]),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -1723,7 +1740,12 @@ class _PlaceDetailSheet extends StatelessWidget {
 class _StatChip extends StatelessWidget {
   final String icon, label, value;
   final Color color;
-  const _StatChip({required this.icon, required this.label, required this.value, required this.color});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1738,9 +1760,12 @@ class _StatChip extends StatelessWidget {
         child: Column(children: [
           Text(icon, style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(value,
+              style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: Colors.white38, fontSize: 9), textAlign: TextAlign.center),
+          Text(label,
+              style: const TextStyle(color: Colors.white38, fontSize: 9),
+              textAlign: TextAlign.center),
         ]),
       ),
     );
@@ -1761,7 +1786,12 @@ class _RewardBurst extends StatelessWidget {
         color: const Color(0xFF0D1821),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: const Color(0xFFFFD700), width: 2),
-        boxShadow: [BoxShadow(color: const Color(0xFFFFD700).withOpacity(0.3), blurRadius: 28, spreadRadius: 6)],
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFFFFD700).withOpacity(0.3),
+              blurRadius: 28,
+              spreadRadius: 6),
+        ],
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Text('🐱', style: TextStyle(fontSize: 52)),
@@ -1769,7 +1799,9 @@ class _RewardBurst extends StatelessWidget {
         const Text('Got some steps in 🚶',
           style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 4),
-        Text(placeName, style: const TextStyle(color: Colors.white54, fontSize: 12), textAlign: TextAlign.center),
+        Text(placeName,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
+          textAlign: TextAlign.center),
         const SizedBox(height: 14),
         if (item != null) ...[
           Row(mainAxisSize: MainAxisSize.min, children: [
@@ -1785,8 +1817,10 @@ class _RewardBurst extends StatelessWidget {
             const SizedBox(width: 10),
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(item!.name,
-                style: const TextStyle(color: Color(0xFFFFD700), fontSize: 18, fontWeight: FontWeight.bold)),
-              const Text('added to inventory', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                style: const TextStyle(
+                    color: Color(0xFFFFD700), fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text('added to inventory',
+                style: TextStyle(color: Colors.white54, fontSize: 11)),
             ]),
           ]),
           const SizedBox(height: 10),
@@ -1815,14 +1849,18 @@ class _RewardItemVisual extends StatelessWidget {
   }
 }
 
-class _ItemTagStyle { final IconData icon; final Color accent; const _ItemTagStyle({required this.icon, required this.accent}); }
+class _ItemTagStyle {
+  final IconData icon;
+  final Color accent;
+  const _ItemTagStyle({required this.icon, required this.accent});
+}
 
 const Map<String, _ItemTagStyle> _itemTagStyles = {
-  'food':     _ItemTagStyle(icon: Icons.lunch_dining_rounded,    accent: Color(0xFFFF7043)),
-  'drinks':   _ItemTagStyle(icon: Icons.local_drink_rounded,     accent: Color(0xFF2196F3)),
-  'fun':      _ItemTagStyle(icon: Icons.sports_esports_rounded,  accent: Color(0xFF7E57C2)),
-  'medicine': _ItemTagStyle(icon: Icons.medication_rounded,      accent: Color(0xFF26A69A)),
-  'cosmetic': _ItemTagStyle(icon: FontAwesomeIcons.glasses,      accent: Color(0xFFE91E8C)),
+  'food':     _ItemTagStyle(icon: Icons.lunch_dining_rounded,   accent: Color(0xFFFF7043)),
+  'drinks':   _ItemTagStyle(icon: Icons.local_drink_rounded,    accent: Color(0xFF2196F3)),
+  'fun':      _ItemTagStyle(icon: Icons.sports_esports_rounded, accent: Color(0xFF7E57C2)),
+  'medicine': _ItemTagStyle(icon: Icons.medication_rounded,     accent: Color(0xFF26A69A)),
+  'cosmetic': _ItemTagStyle(icon: FontAwesomeIcons.glasses,     accent: Color(0xFFE91E8C)),
 };
 
 _ItemTagStyle _styleForItemTag(String tag) =>

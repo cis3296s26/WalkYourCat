@@ -223,7 +223,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openMap() {
-    showMapModal(context);
+    showMapModal(
+      context,
+      inventoryTargetKey: inventoryKey,          // the GlobalKey on the inventory button
+      runAddToCartAnimation: runAddToCartAnimation, // fallback cart animation
+    );
   }
 
   void _openChallenges() {
