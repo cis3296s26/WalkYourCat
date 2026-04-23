@@ -9,7 +9,19 @@ class GeoService {
   Timer? _refreshTimer;
   final StreamController<Position?> _positionController = StreamController<Position?>.broadcast();
 
+  // TRACKER HEERE
+  Future<void>? _permissionSequence;
+
   GeoService._init();
+
+  // Force popups to wait in line
+  Future<void> requestPermissionsSequentially() {
+    _permissionSequence ??= () async {
+      await checkLocationPermission();
+      await checkActivityRecognitionPermission();
+    }();
+    return _permissionSequence!;
+  }
 
   /// Stream of position updates, might be useful for the map?
   Stream<Position?> get positionStream => _positionController.stream;
@@ -19,6 +31,8 @@ class GeoService {
 
   /// Optimized to ensure a single interface for location management
   Future<void> initTracking() async {
+    await requestPermissionsSequentially();
+    
     bool hasPermission = await checkLocationPermission();
     if (!hasPermission) return;
 
