@@ -19,7 +19,17 @@ class CatStatsController extends ChangeNotifier {
     // Load the values
     loadAndApplyOfflineDecay();
     
-    Timer.periodic(const Duration(minutes: 1), (_) => applyDecay());
+    Timer.periodic(const Duration(milliseconds: 20), (_) => applyDecay());
+  }
+
+  /// Saves the current state of the app
+  Future<void> _saveCurrentState() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    await prefs.setDouble(_happinessKey, happinessPercent);
+    await prefs.setDouble(_foodKey, food);
+    await prefs.setDouble(_healthKey, health);
+    await prefs.setInt(_lastSavedTimeKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   /// Unified method to load saved stats and calculate offline decay
@@ -57,10 +67,7 @@ class CatStatsController extends ChangeNotifier {
     notifyListeners();
 
     // save stats and timestamp
-    await prefs.setDouble(_happinessKey, happinessPercent);
-    await prefs.setDouble(_foodKey, food);
-    await prefs.setDouble(_healthKey, health);
-    await prefs.setInt(_lastSavedTimeKey, now);
+    await _saveCurrentState();
   }
 
   /// Unified method to apply decay every minute based on current values
@@ -81,16 +88,7 @@ class CatStatsController extends ChangeNotifier {
     notifyListeners();
 
     // save new values and timestamps
-    final prefs = await SharedPreferences.getInstance();
-    final currentTime = DateTime.now().millisecondsSinceEpoch;
-
-    // Save values
-    await prefs.setDouble(_happinessKey, happinessPercent);
-    await prefs.setDouble(_foodKey, food);
-    await prefs.setDouble(_healthKey, health);
-
-    // Save timestamps
-    await prefs.setInt(_lastSavedTimeKey, currentTime);
+    await _saveCurrentState();
   }
 
   /* Inventory Item Use */
