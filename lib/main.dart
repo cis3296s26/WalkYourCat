@@ -402,7 +402,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ListenableBuilder(
                     listenable: CatStatsController.instance,
                     builder: (context, child) {
+                      // situations
                       final isDead = CatStatsController.instance.health <= 0;
+                      final isSick = CatStatsController.instance.health <= 30 && CatStatsController.instance.health > 0;
+                      final isNight = DateTime.now().hour >= 20 || DateTime.now().hour < 5; 
 
                       /* -- IF CAT IS DEAD, SHOW VET -- */
                       if (isDead) {
@@ -451,6 +454,22 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                             ],
                           ),
+                        );
+                      }
+
+                      /* -- IF CAT IS SICK, CHANGE ANI -- */
+                      else if (isSick) {
+                        return Image.asset(
+                          'assets/animations/sick_cat.gif',
+                          width: MediaQuery.of(context).size.width * 0.65,
+                        );
+                      }
+
+                      /* -- IF IT'S NIGHT, SHOW SLEEPING ANI -- */
+                      else if (isNight) {
+                        return Image.asset(
+                          'assets/animations/sleeping_cat.gif',
+                          width: MediaQuery.of(context).size.width * 0.65,
                         );
                       }
 
