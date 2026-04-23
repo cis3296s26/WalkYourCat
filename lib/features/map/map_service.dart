@@ -7,10 +7,10 @@ import 'package:walkyourcat/services/geo_service.dart';
 
 class LocationDbService {
   FirebaseDatabase? _db;
-  DatabaseReference? _userRef; //nullable, may never init if Firebase is broken
+  DatabaseReference? _userRef;
   StreamSubscription<DatabaseEvent>? _listener;
 
-  // try to grab the DB instance once; if Firebase isn't configured just leave _db null
+  LocationDbService() {
     try {
       _db = DatabaseService.instance.firebaseDb;
     } catch (e) {
@@ -33,7 +33,6 @@ class LocationDbService {
     try {
       _userRef = _db!.ref("active_users").push();
 
-      // Automatically delete this entry when the app closes/disconnects
       await _userRef!.onDisconnect().remove();
 
       // Slightly fuzz the position for privacy
@@ -55,7 +54,6 @@ class LocationDbService {
         }
       });
     } catch (e) {
-      // if any Firebase call fails mid-way, clean up what we can nd leave the rest of the map working normally
       print('[LocationDbService] Error during location sharing setup: $e');
       _userRef = null;
     }
@@ -65,7 +63,6 @@ class LocationDbService {
     _listener?.cancel();
     _listener = null;
 
-    //_userRef is nullable now so this won't throw if Firebase never inited
     try {
       _userRef?.remove();
     } catch (_) {}
