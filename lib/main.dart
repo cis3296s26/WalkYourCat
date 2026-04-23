@@ -594,7 +594,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     "This is your cat's stats bar! Hunger, Health, and Happiness. Keep an eye on these to make sure your cat is doing well!"),
                 child: Positioned(
                   top: 80, // sits just below the steps + coins row
-                  left: 16,
+                  left: 10,
                   child: CatStatsBar(),
                 )),
 
