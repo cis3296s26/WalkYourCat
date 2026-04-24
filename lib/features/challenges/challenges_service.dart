@@ -95,9 +95,10 @@ class ChallengesService {
   }
 
   /// Increase progress for challenges of a certain type
-  Future<void> addProgress(String type, int amount, {String? metaTargetFilter}) async {
+  Future<List<Challenge>> addProgress(String type, int amount, {String? metaTargetFilter}) async {
     final db = await instance.database;
     final allChallenges = await fetchChallenges();
+    List<Challenge> completedChallenges = [];
     
     for (var c in allChallenges) {
       if (c.type == type && !c.isCompleted) {
@@ -119,11 +120,14 @@ class ChallengesService {
         );
 
         if (justCompleted) {
+          completedChallenges.add(c);
+
           AchievementsService.instance.recordChallengeCompletion(c);
           await StepCurrencyManager().addCoins(c.rewardCoins);
         }
       }
     }
+    return completedChallenges;
   }
 
   /// Get challenges by type

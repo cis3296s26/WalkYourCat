@@ -21,6 +21,7 @@ import 'package:walkyourcat/features/leaderboard/leaderboard_modal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:features_tour/features_tour.dart';
 import 'package:flutter/services.dart';
+import 'package:walkyourcat/features/settings/settings_modal.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
@@ -187,6 +188,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeCoins();
+    _currencyManager.onChallengeCompleted = _showChallengeCompletePopup;
+    InventoryService.instance.onChallengeCompleted = _showChallengeCompletePopup;
     tourController.start(context);
     GeoService.instance.initTracking();
     // Update background every minute to check if hour changed
@@ -233,8 +236,14 @@ class _MyHomePageState extends State<MyHomePage> {
           food: 0, health: 0); // TO TEST STAT CHANGES ON PET INTERACTION
     });
 
-    await ChallengesService.instance.addProgress('petting', 1);
-    await StepCurrencyManager().simulateSteps(5);
+    final completed =
+        await ChallengesService.instance.addProgress('petting', 1);
+
+    if (completed.isNotEmpty) {
+      _showChallengeCompletePopup();
+    }
+
+    await _currencyManager.simulateSteps(1000);
     await _loadCoins(); // Refresh coins if a challenge was completed
 
     await Future.delayed(const Duration(seconds: 2));
@@ -256,7 +265,7 @@ class _MyHomePageState extends State<MyHomePage> {
           player.play(AssetSource('sounds/declined.mp3'));
           return false;
         }
-        
+
         // Apply item effects and remove from inventory
         await InventoryService.instance.useItem(invItem);
         // Start animation
@@ -272,7 +281,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openMap() {
     showMapModal(
       context,
-      inventoryTargetKey: inventoryKey,          // the GlobalKey on the inventory button
+      inventoryTargetKey: inventoryKey, // the GlobalKey on the inventory button
       runAddToCartAnimation: runAddToCartAnimation, // fallback cart animation
     );
   }
@@ -287,6 +296,73 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       },
     );
+  }
+
+  void _showChallengeCompletePopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.8, end: 1.0),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              child: child,
+            );
+          },
+          child: Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.25),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.green,
+                      size: 44,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Challenge Complete!",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1C1028),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   void _openAchievements() {
@@ -340,7 +416,6 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentCatImage = 'assets/animations/idle_cat.gif';
       });
     }
-
   }
 
   String _getBackgroundImageForCurrentTime() {
@@ -455,8 +530,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     builder: (context, child) {
                       // situations
                       final isDead = CatStatsController.instance.health <= 0;
-                      final isSick = CatStatsController.instance.health <= 30 && CatStatsController.instance.health > 0;
-                      final isNight = DateTime.now().hour >= 20 || DateTime.now().hour < 5; 
+                      final isSick = CatStatsController.instance.health <= 30 &&
+                          CatStatsController.instance.health > 0;
+                      final isNight =
+                          DateTime.now().hour >= 20 || DateTime.now().hour < 5;
 
                       /* -- IF CAT IS DEAD, SHOW VET -- */
                       if (isDead) {
@@ -618,6 +695,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: const Color(0xFFFFFBF7),
                   elevation: 10,
                   offset: const Offset(0, 8),
+                  onSelected: (SampleItem item) {
+                    if (item == SampleItem.optionOne) {
+                      showSettingsModal(context);
+                    }
+                  },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
