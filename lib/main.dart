@@ -21,6 +21,8 @@ import 'package:walkyourcat/features/leaderboard/leaderboard_modal.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:features_tour/features_tour.dart';
 import 'package:flutter/services.dart';
+import 'package:walkyourcat/features/settings/settings_modal.dart';
+import 'package:walkyourcat/services/audio_settings.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
@@ -253,10 +255,11 @@ class _MyHomePageState extends State<MyHomePage> {
         // if cat is dead, prevent item use and show message
         if (CatStatsController.instance.health <= 0) {
           showMessage(context, "Your cat is at the vet and cannot use items.");
+          player.setVolume(AudioSettings.effectiveSfxVolume);
           player.play(AssetSource('sounds/declined.mp3'));
           return false;
         }
-        
+
         // Apply item effects and remove from inventory
         await InventoryService.instance.useItem(invItem);
         // Start animation
@@ -272,7 +275,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openMap() {
     showMapModal(
       context,
-      inventoryTargetKey: inventoryKey,          // the GlobalKey on the inventory button
+      inventoryTargetKey: inventoryKey, // the GlobalKey on the inventory button
       runAddToCartAnimation: runAddToCartAnimation, // fallback cart animation
     );
   }
@@ -340,7 +343,6 @@ class _MyHomePageState extends State<MyHomePage> {
         _currentCatImage = 'assets/animations/idle_cat.gif';
       });
     }
-
   }
 
   String _getBackgroundImageForCurrentTime() {
@@ -379,7 +381,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<bool> purchaseItem(ShopItem item, GlobalKey itemKey) async {
     if (_coins < item.price) {
       showMessage(context, "Not enough coins available for purchase");
-      player.play(AssetSource('sounds/declined.mp3'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/declined.mp3'));
       return false;
     }
 
@@ -392,7 +395,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       await _currencyManager.setCoinBalance(_coins);
       runAddToCartAnimation(itemKey);
-      player.play(AssetSource('sounds/purchase.wav'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/purchase.wav'));
 
       print("Purchased ${item.name}! New balance: $_coins");
       return true;
@@ -418,13 +422,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // update coin balance
       await _currencyManager.setCoinBalance(_coins);
-      player.play(AssetSource('sounds/purchase.wav'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/purchase.wav'));
       debugPrint("[MAIN]: Paid vet bill!");
     }
     // else, it cannot revive
     else {
       showMessage(context, "Not enough coins available for purchase");
-      player.play(AssetSource('sounds/declined.mp3'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/declined.mp3'));
     }
   }
 
@@ -455,8 +461,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     builder: (context, child) {
                       // situations
                       final isDead = CatStatsController.instance.health <= 0;
-                      final isSick = CatStatsController.instance.health <= 30 && CatStatsController.instance.health > 0;
-                      final isNight = DateTime.now().hour >= 20 || DateTime.now().hour < 5; 
+                      final isSick = CatStatsController.instance.health <= 30 &&
+                          CatStatsController.instance.health > 0;
+                      final isNight =
+                          DateTime.now().hour >= 20 || DateTime.now().hour < 5;
 
                       /* -- IF CAT IS DEAD, SHOW VET -- */
                       if (isDead) {
@@ -618,6 +626,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: const Color(0xFFFFFBF7),
                   elevation: 10,
                   offset: const Offset(0, 8),
+                  onSelected: (SampleItem item) {
+                    if (item == SampleItem.optionOne) {
+                      showSettingsModal(context);
+                    }
+                  },
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
