@@ -188,6 +188,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _initializeCoins();
+    _currencyManager.onChallengeCompleted = _showChallengeCompletePopup;
+    InventoryService.instance.onChallengeCompleted = _showChallengeCompletePopup;
     tourController.start(context);
     GeoService.instance.initTracking();
     // Update background every minute to check if hour changed
@@ -234,8 +236,14 @@ class _MyHomePageState extends State<MyHomePage> {
           food: 0, health: 0); // TO TEST STAT CHANGES ON PET INTERACTION
     });
 
-    await ChallengesService.instance.addProgress('petting', 1);
-    await StepCurrencyManager().simulateSteps(5);
+    final completed =
+        await ChallengesService.instance.addProgress('petting', 1);
+
+    if (completed.isNotEmpty) {
+      _showChallengeCompletePopup();
+    }
+
+    await _currencyManager.simulateSteps(1000);
     await _loadCoins(); // Refresh coins if a challenge was completed
 
     await Future.delayed(const Duration(seconds: 2));
@@ -288,6 +296,73 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       },
     );
+  }
+
+  void _showChallengeCompletePopup() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) {
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.8, end: 1.0),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          builder: (context, scale, child) {
+            return Transform.scale(
+              scale: scale,
+              child: child,
+            );
+          },
+          child: Center(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.25),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.green,
+                      size: 44,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Challenge Complete!",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1C1028),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   void _openAchievements() {

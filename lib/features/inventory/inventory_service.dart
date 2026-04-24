@@ -13,7 +13,10 @@ class InventoryService {
   InventoryService._init();
 
   /// Fetches the database from the shared DatabaseService
-  Future<Database> get database async => await DatabaseService.instance.database;
+  Future<Database> get database async =>
+      await DatabaseService.instance.database;
+
+  VoidCallback? onChallengeCompleted;
 
   /// Add an item or increment quantity if it exists
   Future<void> addItem(ShopItem item) async {
@@ -76,29 +79,37 @@ class InventoryService {
     final db = await instance.database;
     final result = await db.query('inventory');
 
-    return result.map((json) => InventoryItem(
-      item: ShopItem.fromMap(json),
-      quantity: json['quantity'] as int,
-    )).toList();
+    return result
+        .map((json) => InventoryItem(
+              item: ShopItem.fromMap(json),
+              quantity: json['quantity'] as int,
+            ))
+        .toList();
   }
 
   /// Applies the effects of an item to the pet and removes it from inventory
   Future<void> useItem(InventoryItem invItem) async {
-    
     /* --- apply item effects to pet --- */
     await CatStatsBar.updateStats(
-      food: invItem.item.stats.hunger,
-      health: invItem.item.stats.health,
-      happiness: invItem.item.stats.happiness
-    );
-    debugPrint("Used item: ${invItem.item.name} - Hunger: ${invItem.item.stats.hunger}, Health: ${invItem.item.stats.health}, Happiness: ${invItem.item.stats.happiness}");
-    
+        food: invItem.item.stats.hunger,
+        health: invItem.item.stats.health,
+        happiness: invItem.item.stats.happiness);
+    debugPrint(
+        "Used item: ${invItem.item.name} - Hunger: ${invItem.item.stats.hunger}, Health: ${invItem.item.stats.health}, Happiness: ${invItem.item.stats.happiness}");
+
     switch (invItem.item.tag) {
       /* -- FOOD -- */
       case 'food':
         debugPrint("Used food item: ${invItem.item.name}.");
         // add item if it's part of the challenge metaTarget
-        await ChallengesService.instance.addProgress('feeding', 1, metaTargetFilter: invItem.item.id.toString());
+
+        final result = await ChallengesService.instance.addProgress(
+            'feeding', 1,
+            metaTargetFilter: invItem.item.id.toString());
+
+        if (result.isNotEmpty) {
+          onChallengeCompleted?.call();
+        }
         break;
       /* -- MEDICINE -- */
       case 'medicine':
@@ -117,7 +128,8 @@ class InventoryService {
         debugPrint("Used cosmetic item: ${invItem.item.name}.");
         break;
       default:
-        debugPrint("There must've been something wrong with this item: ${invItem.item.name}"); 
+        debugPrint(
+            "There must've been something wrong with this item: ${invItem.item.name}");
         break;
     }
 

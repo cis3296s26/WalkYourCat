@@ -1,6 +1,8 @@
 // IMPORT STATEMENTS
 import 'package:shared_preferences/shared_preferences.dart'; // for storing coin balance persistently
 import 'package:walkyourcat/features/challenges/challenges_service.dart';
+import 'package:walkyourcat/features/challenges/challenge_item.dart';
+import 'package:flutter/foundation.dart';
 
 class StepCurrencyManager {
   static final StepCurrencyManager _instance = StepCurrencyManager._init();
@@ -18,6 +20,8 @@ class StepCurrencyManager {
 
   int startOfDaySteps = 0;
   int lastDate = 0;
+  List<Challenge> lastCompletedChallenges = [];
+  VoidCallback? onChallengeCompleted;
   /* -- END OF VARIABLE DECLARATIONS -- */
 
   /* ----- LOAD & SAVE FUNCTIONS ----- */
@@ -94,7 +98,11 @@ class StepCurrencyManager {
 
     // Update challenge progress with the actual step difference since last update.
     if (newSteps > 0) {
-      await ChallengesService.instance.addProgress('walking', newSteps);
+      final result = await ChallengesService.instance.addProgress('walking', newSteps);
+
+      if (result.isNotEmpty) {
+        onChallengeCompleted?.call();
+      }
     }
 
     return dailySteps;
