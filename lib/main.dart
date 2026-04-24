@@ -22,6 +22,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:features_tour/features_tour.dart';
 import 'package:flutter/services.dart';
 import 'package:walkyourcat/features/settings/settings_modal.dart';
+import 'package:walkyourcat/services/audio_settings.dart';
 
 enum SampleItem { optionOne, optionTwo, optionThree, optionFour, optionFive }
 
@@ -254,6 +255,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // if cat is dead, prevent item use and show message
         if (CatStatsController.instance.health <= 0) {
           showMessage(context, "Your cat is at the vet and cannot use items.");
+          player.setVolume(AudioSettings.effectiveSfxVolume);
           player.play(AssetSource('sounds/declined.mp3'));
           return false;
         }
@@ -379,7 +381,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<bool> purchaseItem(ShopItem item, GlobalKey itemKey) async {
     if (_coins < item.price) {
       showMessage(context, "Not enough coins available for purchase");
-      player.play(AssetSource('sounds/declined.mp3'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/declined.mp3'));
       return false;
     }
 
@@ -392,7 +395,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
       await _currencyManager.setCoinBalance(_coins);
       runAddToCartAnimation(itemKey);
-      player.play(AssetSource('sounds/purchase.wav'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/purchase.wav'));
 
       print("Purchased ${item.name}! New balance: $_coins");
       return true;
@@ -418,13 +422,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
       // update coin balance
       await _currencyManager.setCoinBalance(_coins);
-      player.play(AssetSource('sounds/purchase.wav'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/purchase.wav'));
       debugPrint("[MAIN]: Paid vet bill!");
     }
     // else, it cannot revive
     else {
       showMessage(context, "Not enough coins available for purchase");
-      player.play(AssetSource('sounds/declined.mp3'));
+      await player.setVolume(AudioSettings.effectiveSfxVolume);
+      await player.play(AssetSource('sounds/declined.mp3'));
     }
   }
 
