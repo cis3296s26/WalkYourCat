@@ -12,7 +12,7 @@
 
 WalkYourCat is for people who want motivation to increase their daily physical activity and exercise. It is a fitness app grounded in game theory that allows users to convert their physical activity into a positive response loop by taking care of their virtual pet.
 
-![This is a screenshot.](week4picture.png)
+![This is a screenshot.](week5picture.png)
 
 ## UML Class Diagram
 
