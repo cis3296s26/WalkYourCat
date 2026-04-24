@@ -14,6 +14,7 @@
         },
         {
             "id": 2,
+            "image": "assets/images/bread.png",
             "tag": "food",
             "name": "Fresh Bread",
             "price": 15,
@@ -25,6 +26,7 @@
         },
         {
             "id": 3,
+            "image": "assets/images/meat.png",
             "tag": "food",
             "name": "Salted Beef",
             "price": 30,
@@ -36,6 +38,7 @@
         },
         {
             "id": 4,
+            "image": "assets/images/bowl-soup.png",
             "tag": "food",
             "name": "Bowl of Soup",
             "price": 20,
@@ -47,6 +50,7 @@
         },
         {
             "id": 5,
+            "image": "assets/images/mushroom.png",
             "tag": "food",
             "name": "Mysterious Mushroom",
             "price": 5,
