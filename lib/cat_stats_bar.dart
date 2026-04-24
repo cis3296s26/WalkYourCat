@@ -55,20 +55,20 @@ class CatStatsController extends ChangeNotifier {
   /// Unified method to apply decay every minute based on current values
   Future<void> applyDecay({double? hoursElapsed}) async {
     /* --- DECAY RATES --- */
-    double happinessDecayRate = 0.01; // 1% per minute
-    double foodDecayRate = happinessPercent < 0.5 ? 0.16 : 0.13; // Faster decay if unhappy
-    double healthDecayRate = food < 30.0 ? 0.33 : 0.0; // Health decays if food is low
+    double foodDecayRate = 0.13;
+    double happinessDecayRate = food < 50.0 ? 0.002 : 0.001;
+    double healthDecayRate = food < 30.0 ? 0.33 : (happinessPercent < 0.20 ? 0.10 : 0.0);
 
     /* --- CASE: user was offline --- */
     if (hoursElapsed != null) {
-      happinessPercent = (happinessPercent - (hoursElapsed * happinessDecayRate)).clamp(0.0, 1.0);
       food = (food - (hoursElapsed * foodDecayRate)).clamp(0.0, 100.0);
+      happinessPercent = (happinessPercent - (hoursElapsed * happinessDecayRate)).clamp(0.0, 1.0);
       health = (health - (hoursElapsed * healthDecayRate)).clamp(0.0, 100.0);
     }
     /* --- CASE: user is online --- */
     else {
-      happinessPercent = (happinessPercent - happinessDecayRate).clamp(0.0, 1.0);
       food = (food - foodDecayRate).clamp(0.0, 100.0);
+      happinessPercent = (happinessPercent - happinessDecayRate).clamp(0.0, 1.0);
       health = (health - healthDecayRate).clamp(0.0, 100.0);
     }
 
