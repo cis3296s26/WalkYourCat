@@ -182,7 +182,19 @@ class _ShopModalCard extends StatelessWidget {
     ),
   ];
 
-  
+  Widget _buildTab(
+      _ShopCategory category, int index, TabController controller) {
+    final isActive = controller.index == index;
+
+    return Tab(
+      icon: Icon(
+        category.icon,
+        size: isActive ? 24 : 18,
+        color: isActive ? category.accent : Colors.grey.shade500,
+      ),
+      text: isActive ? category.label : null,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
