@@ -19,7 +19,7 @@ class CatStatsController extends ChangeNotifier {
     // Load the values
     loadAndApplyOfflineDecay();
     
-    Timer.periodic(const Duration(milliseconds: 20), (_) => applyDecay());
+    Timer.periodic(const Duration(minutes: 1), (_) => applyDecay());
   }
 
   /// Saves the current state of the app
@@ -41,48 +41,36 @@ class CatStatsController extends ChangeNotifier {
     final lastSavedMs = prefs.getInt(_lastSavedTimeKey) ?? now;
 
     // calculate elapsed hours since last save for each stat
-    final happinessHoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
-    final foodHoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
-    final healthHoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
+    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
 
     // fetch saved values
-    final savedHappiness = prefs.getDouble(_happinessKey) ?? 1.0; 
-    final savedFood = prefs.getDouble(_foodKey) ?? 100.0;
-    final savedHealth = prefs.getDouble(_healthKey) ?? 100.0;
+    happinessPercent = prefs.getDouble(_happinessKey) ?? 1.0; 
+    food = prefs.getDouble(_foodKey) ?? 100.0;
+    health = prefs.getDouble(_healthKey) ?? 100.0;
 
-    /* --------------- APPLY DECAY --------------- */
-    
-    // Happiness
-    happinessPercent = (savedHappiness - (happinessHoursElapsed / 10)).clamp(0.0, 1.0);
-
-    // Food
-    final foodDecayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
-    food = (savedFood - (foodHoursElapsed * foodDecayRate)).clamp(0.0, 100.0);
-
-    // Health 
-    final healthDecayRate = food < 30.0 ? 20.0 : 0.0;
-    health = (savedHealth - (healthHoursElapsed * healthDecayRate)).clamp(0.0, 100.0);
-
-    // update UI
-    notifyListeners();
-
-    // save stats and timestamp
-    await _saveCurrentState();
+    // apply decay based on elapsed time
+    applyDecay(hoursElapsed: hoursElapsed);
   }
 
   /// Unified method to apply decay every minute based on current values
-  Future<void> applyDecay() async {
-    /* --------------- UPDATE STATS --------------- */
-    // Happiness
-    happinessPercent = (happinessPercent - 0.01).clamp(0.0, 1.0);
+  Future<void> applyDecay({double? hoursElapsed}) async {
+    /* --- DECAY RATES --- */
+    double happinessDecayRate = 0.01; // 1% per minute
+    double foodDecayRate = happinessPercent < 0.5 ? 0.16 : 0.13; // Faster decay if unhappy
+    double healthDecayRate = food < 30.0 ? 0.33 : 0.0; // Health decays if food is low
 
-    // Food
-    final foodDecayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
-    food = (food - foodDecayRate / 60.0).clamp(0.0, 100.0);
-
-    // Health
-    final healthDecayRate = food < 30.0 ? 20.0 : 0.0;
-    health = (health - healthDecayRate / 60.0).clamp(0.0, 100.0);
+    /* --- CASE: user was offline --- */
+    if (hoursElapsed != null) {
+      happinessPercent = (happinessPercent - (hoursElapsed * happinessDecayRate)).clamp(0.0, 1.0);
+      food = (food - (hoursElapsed * foodDecayRate)).clamp(0.0, 100.0);
+      health = (health - (hoursElapsed * healthDecayRate)).clamp(0.0, 100.0);
+    }
+    /* --- CASE: user is online --- */
+    else {
+      happinessPercent = (happinessPercent - happinessDecayRate).clamp(0.0, 1.0);
+      food = (food - foodDecayRate).clamp(0.0, 100.0);
+      health = (health - healthDecayRate).clamp(0.0, 100.0);
+    }
 
     // trigger UI update
     notifyListeners();
