@@ -250,6 +250,13 @@ class _MyHomePageState extends State<MyHomePage> {
     showInventoryModal(
       context: context,
       onItemTap: (invItem, key) async {
+        // if cat is dead, prevent item use and show message
+        if (CatStatsController.instance.health <= 0) {
+          showMessage(context, "Your cat is at the vet and cannot use items.");
+          player.play(AssetSource('sounds/declined.mp3'));
+          return false;
+        }
+        
         // Apply item effects and remove from inventory
         await InventoryService.instance.useItem(invItem);
         // Start animation
