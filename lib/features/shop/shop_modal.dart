@@ -182,6 +182,20 @@ class _ShopModalCard extends StatelessWidget {
     ),
   ];
 
+  Widget _buildTab(
+      _ShopCategory category, int index, TabController controller) {
+    final isActive = controller.index == index;
+
+    return Tab(
+      icon: Icon(
+        category.icon,
+        size: isActive ? 24 : 18,
+        color: isActive ? category.accent : Colors.grey.shade500,
+      ),
+      text: isActive ? category.label : null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeCategories = _categories
@@ -199,20 +213,27 @@ class _ShopModalCard extends StatelessWidget {
             _ShopHeader(coins: coins),
             Container(
               color: const Color(0xFFFFFBF7),
-              child: TabBar(
-                isScrollable: true,
-                labelStyle: TextStyle(color: Color(0xFF2C1F17)),
-                unselectedLabelStyle: TextStyle(color: Color(0xFFFFFBF7)),
-                indicatorColor: const Color.fromARGB(255, 255, 215, 64),
-                tabs: activeCategories
-                    .map(
-                      (category) => Tab(
-                        icon: Icon(category.icon,
-                            size: 18, color: Colors.grey.shade500),
-                        text: category.label,
-                      ),
-                    )
-                    .toList(),
+              child: Builder(
+                builder: (context) {
+                  final controller = DefaultTabController.of(context);
+                  return AnimatedBuilder(
+                    animation: controller,
+                    builder: (context, child) {
+                      return TabBar(
+                        isScrollable: true,
+                        labelStyle: TextStyle(color: Color(0xFF2C1F17)),
+                        unselectedLabelStyle:
+                            TextStyle(color: Color(0xFFFFFBF7)),
+                        indicatorColor: const Color.fromARGB(255, 255, 215, 64),
+                        tabs: activeCategories.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final category = entry.value;
+                          return _buildTab(category, index, controller);
+                        }).toList(),
+                      );
+                    },
+                  );
+                },
               ),
             ),
             Expanded(
@@ -402,16 +423,15 @@ class _ShopItemCard extends StatelessWidget {
                           ),
                         if (item.stats.health > 0)
                           _StatChip(
-                            label: 'Health ${_signed(item.stats.health)}',
-                            background: Colors.white.withValues(alpha: 0.75),
-                            foreground: const Color(0xFF2E7D32)
-                          ),
+                              label: 'Health ${_signed(item.stats.health)}',
+                              background: Colors.white.withValues(alpha: 0.75),
+                              foreground: const Color(0xFF2E7D32)),
                         if (item.stats.happiness > 0)
                           _StatChip(
-                            label: 'Happiness ${_signed(item.stats.happiness)}',
-                            background: Colors.white.withValues(alpha: 0.75),
-                            foreground: const Color(0xFF7E57C2)
-                          ),
+                              label:
+                                  'Happiness ${_signed(item.stats.happiness)}',
+                              background: Colors.white.withValues(alpha: 0.75),
+                              foreground: const Color(0xFF7E57C2)),
                       ],
                     ),
                   ],
