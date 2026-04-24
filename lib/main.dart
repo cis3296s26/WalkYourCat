@@ -265,8 +265,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openMap() {
     showMapModal(
       context,
-      runAddToCartAnimation: runAddToCartAnimation,
-      inventoryTargetKey: inventoryKey,
+      inventoryTargetKey: inventoryKey,          // the GlobalKey on the inventory button
+      runAddToCartAnimation: runAddToCartAnimation, // fallback cart animation
     );
   }
 
