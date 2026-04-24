@@ -10,114 +10,73 @@ class CatStatsController extends ChangeNotifier {
   double happinessPercent = 1.0;
 
   static const String _foodKey = 'cat_food_level';
-  static const String _lastSavedKey = 'cat_food_last_saved';
-
   static const String _healthKey = 'cat_health_level';
-  static const String _lastSavedHealthKey = 'cat_health_last_saved';
-
   static const String _happinessKey = 'cat_happiness_level';
-  static const String _lastSavedHappinessKey = 'cat_happiness_last_saved';
+
+  static const String _lastSavedTimeKey = 'time_last_saved';
 
   CatStatsController._init() {
     // Load the values
-    _foodLoadAndDecay();
-    _healthLoadAndDecay();
-    _happinessLoadAndDecay();
-
-    // Decay timers
-    Timer.periodic(const Duration(minutes: 1), (_) => _applyDecay());
+    loadAndApplyOfflineDecay();
+    
+    Timer.periodic(const Duration(minutes: 1), (_) => applyDecay());
   }
 
-  /* Decay Logic */
-  Future<void> _foodLoadAndDecay() async {
+  /// Saves the current state of the app
+  Future<void> _saveCurrentState() async {
     final prefs = await SharedPreferences.getInstance();
-
-    final savedFood = prefs.getDouble(_foodKey) ?? 100.0;
-    final lastSavedMs = prefs.getInt(_lastSavedKey) ?? DateTime.now().millisecondsSinceEpoch;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
-
-    final decayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
-    food = (savedFood - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
-
-    notifyListeners(); // Tells the UI to redraw
-
-    await prefs.setDouble(_foodKey, food);
-    await prefs.setInt(_lastSavedKey, now);
-  }
-
-  Future<void> _healthLoadAndDecay() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final savedHealth = prefs.getDouble(_healthKey) ?? 100.0;
-    final lastSavedMs = prefs.getInt(_lastSavedHealthKey) ?? DateTime.now().millisecondsSinceEpoch;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
-
-    final decayRate = food < 30.0 ? 20.0 : 0.0;
-    health = (savedHealth - (hoursElapsed * decayRate)).clamp(0.0, 100.0);
-
-    notifyListeners();
-
-    await prefs.setDouble(_healthKey, health);
-    await prefs.setInt(_lastSavedHealthKey, now);
-  }
-
-  Future<void> _happinessLoadAndDecay() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    final savedHappiness = prefs.getDouble(_happinessKey) ?? 100.0;
-    final lastSavedMs = prefs.getInt(_lastSavedHappinessKey) ?? DateTime.now().millisecondsSinceEpoch;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
-
-    happinessPercent = (savedHappiness - (hoursElapsed / 10)).clamp(0.0, 1.0);
-
-    notifyListeners();
-
+    
     await prefs.setDouble(_happinessKey, happinessPercent);
-    await prefs.setInt(_lastSavedHappinessKey, now);
-  }
-
-  Future<void> _applyDecay() async {
-    await _applyFoodDecay();
-    await _applyHealthDecay();
-    await _applyHappinessDecay();
-  }
-
-  Future<void> _applyFoodDecay() async {
-    final decayRate = happinessPercent < 0.5 ? 10.0 : 8.0;
-    food = (food - decayRate / 60.0).clamp(0.0, 100.0);
-
-    notifyListeners();
-
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_foodKey, food);
-    await prefs.setInt(_lastSavedKey, DateTime.now().millisecondsSinceEpoch);
-  }
-
-  Future<void> _applyHealthDecay() async {
-    final decayRate = food < 30.0 ? 20.0 : 0.0;
-    health = (health - decayRate / 60.0).clamp(0.0, 100.0);
-
-    notifyListeners();
-
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_healthKey, health);
-    await prefs.setInt( _lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(_lastSavedTimeKey, DateTime.now().millisecondsSinceEpoch);
   }
 
-  Future<void> _applyHappinessDecay() async {
-    happinessPercent = (happinessPercent - 0.01).clamp(0.0, 1.0);
+  /// Unified method to load saved stats and calculate offline decay
+  Future<void> loadAndApplyOfflineDecay() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now().millisecondsSinceEpoch;
 
+    // fetch saved timestaps
+    final lastSavedMs = prefs.getInt(_lastSavedTimeKey) ?? now;
+
+    // calculate elapsed hours since last save for each stat
+    final hoursElapsed = (now - lastSavedMs) / (1000 * 60 * 60);
+
+    // fetch saved values
+    happinessPercent = prefs.getDouble(_happinessKey) ?? 1.0; 
+    food = prefs.getDouble(_foodKey) ?? 100.0;
+    health = prefs.getDouble(_healthKey) ?? 100.0;
+
+    // apply decay based on elapsed time
+    applyDecay(hoursElapsed: hoursElapsed);
+  }
+
+  /// Unified method to apply decay every minute based on current values
+  Future<void> applyDecay({double? hoursElapsed}) async {
+    /* --- DECAY RATES --- */
+    double foodDecayRate = 0.13;
+    double happinessDecayRate = food < 50.0 ? 0.002 : 0.001;
+    double healthDecayRate = food < 30.0 ? 0.33 : (happinessPercent < 0.20 ? 0.10 : 0.0);
+
+    /* --- CASE: user was offline --- */
+    if (hoursElapsed != null) {
+      food = (food - (hoursElapsed * foodDecayRate)).clamp(0.0, 100.0);
+      happinessPercent = (happinessPercent - (hoursElapsed * happinessDecayRate)).clamp(0.0, 1.0);
+      health = (health - (hoursElapsed * healthDecayRate)).clamp(0.0, 100.0);
+    }
+    /* --- CASE: user is online --- */
+    else {
+      food = (food - foodDecayRate).clamp(0.0, 100.0);
+      happinessPercent = (happinessPercent - happinessDecayRate).clamp(0.0, 1.0);
+      health = (health - healthDecayRate).clamp(0.0, 100.0);
+    }
+
+    // trigger UI update
     notifyListeners();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble(_happinessKey, happinessPercent);
-    await prefs.setInt(_lastSavedHappinessKey, DateTime.now().millisecondsSinceEpoch);
+    // save new values and timestamps
+    await _saveCurrentState();
   }
 
   /* Inventory Item Use */
@@ -152,8 +111,7 @@ class CatStatsController extends ChangeNotifier {
     await prefs.setDouble(_foodKey, food);
     await prefs.setDouble(_healthKey, health);
     await prefs.setDouble(_happinessKey, happinessPercent);
-    await prefs.setInt(_lastSavedKey, DateTime.now().millisecondsSinceEpoch);
-    await prefs.setInt(_lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt(_lastSavedTimeKey, DateTime.now().millisecondsSinceEpoch);
   }
 }
 
