@@ -23,12 +23,8 @@ class CatStatsController extends ChangeNotifier {
     _foodLoadAndDecay();
     _healthLoadAndDecay();
     _happinessLoadAndDecay();
-    
-    // Decay timers
-    // Timer.periodic(const Duration(minutes: 1), (_) => _applyFoodDecay());
-    // Timer.periodic(const Duration(minutes: 1), (_) => _applyHealthDecay());
-    // Timer.periodic(const Duration(minutes: 1), (_) => _applyHappinessDecay());
 
+    // Decay timers
     Timer.periodic(const Duration(minutes: 1), (_) => _applyDecay());
   }
 
@@ -111,7 +107,7 @@ class CatStatsController extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_healthKey, health);
-    await prefs.setInt(_lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
+    await prefs.setInt( _lastSavedHealthKey, DateTime.now().millisecondsSinceEpoch);
   }
 
   Future<void> _applyHappinessDecay() async {
@@ -132,12 +128,11 @@ class CatStatsController extends ChangeNotifier {
     if (healthAdded != null) {
       health = (health + healthAdded).clamp(0.0, 100.0);
     }
-    if (happinessAdded != null) { 
+    if (happinessAdded != null) {
       happinessPercent = (happinessPercent + (happinessAdded / 100)).clamp(0.0, 1.0);
     }
 
     debugPrint("Stats are now: Food: $food, Health: $health");
-    
     notifyListeners(); // Force the UI to update
 
     // Save the new stat boost immediately so closing the app doesn't lose it
@@ -152,8 +147,7 @@ class CatStatsController extends ChangeNotifier {
     food = 100.0;
     health = 100.0;
     happinessPercent = 1.0;
-
-    notifyListeners(); 
+    notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_foodKey, food);
     await prefs.setDouble(_healthKey, health);
@@ -176,12 +170,6 @@ class CatStatsBar extends StatelessWidget {
     );
   }
 
-  Color _barColor(double value) {
-    if (value > 60) return const Color(0xFF4CAF50);
-    if (value > 30) return const Color(0xFFFF9800);
-    return const Color(0xFFF44336);
-  }
-
   @override
   Widget build(BuildContext context) {
     // redraw whenever notifyListeners() is called inside the controller
@@ -195,24 +183,22 @@ class CatStatsBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _StatBar(
-              icon: Icons.restaurant,
-              label: 'Food',
-              value: controller.food / 100.0,
-              color: _barColor(controller.food),
-            ),
-
-            _StatBar(
               icon: Icons.health_and_safety,
               label: 'Health',
               value: controller.health / 100.0,
-              color: _barColor(controller.health),
+              color: Color.fromRGBO(112, 236, 70, 1),
             ),
-            
+            _StatBar(
+              icon: Icons.restaurant,
+              label: 'Food',
+              value: controller.food / 100.0,
+              color: Color.fromRGBO(234, 126, 54, 1),
+            ),
             _StatBar(
               icon: Icons.sentiment_very_satisfied,
               label: 'Happiness',
               value: controller.happinessPercent,
-              color: _barColor(controller.happinessPercent * 100),
+              color: Color.fromRGBO(239, 204, 60, 1),
             ),
           ],
         );
@@ -237,6 +223,7 @@ class _StatBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progress = value.clamp(0.0, 1.0);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -250,26 +237,30 @@ class _StatBar extends StatelessWidget {
           Icon(icon, color: Colors.black, size: 15),
           const SizedBox(width: 10),
           SizedBox(
-            width: 70,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: value.clamp(0.0, 1.0),
-                minHeight: 10,
-                backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-                valueColor: AlwaysStoppedAnimation<Color>(color),
+            width: 150,
+            child: Container(
+              height: 14,
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: color, width: 1.8),
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: progress,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            '${(value * 100).round()}%',
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
         ],
       ),
     );
