@@ -237,7 +237,7 @@ class _StatBar extends StatelessWidget {
           Icon(icon, color: Colors.black, size: 15),
           const SizedBox(width: 10),
           SizedBox(
-            width: 70,
+            width: 150,
             child: Container(
               height: 14,
               padding: const EdgeInsets.all(2),
