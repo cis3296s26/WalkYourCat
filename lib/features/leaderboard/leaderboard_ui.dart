@@ -36,7 +36,7 @@ class _LeaderboardDialogState extends State<LeaderboardDialog> {
       final mySteps = _stepManager!.unprocessedSteps;
 
       final List<Map<String, dynamic>> competitors = [
-        {'id': '1', 'name': 'Bill Harry Jose', 'target': 13000},
+        {'id': '1', 'name': 'Bill Harry José', 'target': 13000},
         {'id': '2', 'name': 'John Doe', 'target': 22000},
         {'id': '3', 'name': 'Mary Michael', 'target': 6700},
       ];
@@ -46,7 +46,7 @@ class _LeaderboardDialogState extends State<LeaderboardDialog> {
       }
 
       _leaderboardEntries = [
-        Leaderboard(id: '1', name: 'Bill Harry Jose', stepsCount: 0),
+        Leaderboard(id: '1', name: 'Bill Harry José', stepsCount: 0),
         Leaderboard(id: '2', name: 'John Doe', stepsCount: 0),
         Leaderboard(id: '3', name: 'Mary Michael', stepsCount: 0),
         Leaderboard(id: 'me', name: 'You', stepsCount: mySteps),
@@ -60,7 +60,7 @@ class _LeaderboardDialogState extends State<LeaderboardDialog> {
       _competitorTargets['2'] = 22000;
       _competitorTargets['3'] = 6700;
       _leaderboardEntries = [
-        Leaderboard(id: '1', name: 'Bill Harry Jose', stepsCount: 0),
+        Leaderboard(id: '1', name: 'Bill Harry José', stepsCount: 0),
         Leaderboard(id: '2', name: 'John Doe', stepsCount: 0),
         Leaderboard(id: '3', name: 'Mary Michael', stepsCount: 0),
         Leaderboard(id: 'me', name: 'You', stepsCount: 0),
